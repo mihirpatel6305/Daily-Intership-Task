@@ -1,0 +1,31 @@
+.status {
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  width: fit-content;
+  text-transform: capitalize;
+}
+
+.pending {
+  background-color: #fff8e1;
+  color: #ff9800;
+  border: 1px solid #ff9800;
+}
+
+.in-progress {
+  background-color: #e3f2fd;
+  color: #2196f3;
+  border: 1px solid #2196f3;
+}
+
+.completed {
+  background-color: #e8f5e9;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.cancelled {
+  background-color: #ffebee;
+  color: #f44336;
+  border: 1px solid #f44336;
+}

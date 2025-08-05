@@ -1,0 +1,17 @@
+# Ignore all node_modules in subfolders
+**/node_modules/
+
+# Ignore build outputs
+**/dist/
+**/build/
+
+# macOS
+.DS_Store
+
+# dotenv files
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
