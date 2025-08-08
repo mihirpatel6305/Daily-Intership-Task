@@ -1,0 +1,35 @@
+.add-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-container input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #60a5fa; 
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.add-container input:focus {
+  border-color: #2563eb; 
+}
+
+.add-container button {
+  padding: 10px 16px;
+  background-color: #3b82f6; 
+  color: white;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.add-container button:hover {
+  background-color: #2563eb; 
+}
