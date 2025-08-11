@@ -27,6 +27,16 @@ function DisplayTimer({ timer, timers, setTimers }) {
     }
   }
 
+  function handleReset() {
+    const updatedTimers = timers.map((timerElement) => {
+      if (timerElement.id === timer.id) {
+        return { ...timer, count: timer?.resetValue };
+      }
+      return timerElement;
+    });
+    setTimers(updatedTimers);
+  }
+
   function handleDelete() {
     if (timer?.id) {
       const updatedTimers = timers.filter(
@@ -89,6 +99,13 @@ function DisplayTimer({ timer, timers, setTimers }) {
                 Pause
               </button>
             )}
+
+            <button
+              onClick={handleReset}
+              class="px-4 py-2 bg-gray-400 text-white rounded-lg border border-gray-500 hover:bg-gray-500 active:bg-gray-600 transition-colors duration-200"
+            >
+              Reset
+            </button>
           </>
         )}
       </div>

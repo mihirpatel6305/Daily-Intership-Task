@@ -10,6 +10,7 @@ function AddTimer({ setTimers }) {
         id: new Date(),
         count: totalSeconds,
         isPause: false,
+        resetValue:totalSeconds,
       };
       setTimers((prev) => [...prev, newTimer]);
       setInputCount("00:00:00");
