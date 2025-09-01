@@ -26,9 +26,13 @@ function AddPost() {
       queryClient.setQueryData(["posts"], context?.previousPosts);
       alert("something Error in Adding post");
     },
-    onSuccess: () => {
-      console.log("post Added Successfully");
-      queryClient.invalidateQueries(["posts"]);
+    // onSuccess: () => {
+    //   console.log("post Added Successfully");
+    //   queryClient.invalidateQueries(["posts"]);
+    // },
+    onSuccess: (data, variables, context) => {
+      // No need to invalidate if you already added optimistically
+      console.log("post Added Successfully", data);
     },
   });
 

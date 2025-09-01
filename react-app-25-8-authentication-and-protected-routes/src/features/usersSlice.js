@@ -5,8 +5,10 @@ const usersSlice = createSlice({
   initialState: [],
   reducers: {
     setUsers: (state, action) => {
-      console.log("state>>", state);
-      console.log("action>>", action);
+      if (action?.payload) {
+        return action.payload;
+      }
+      return;
     },
   },
 });
