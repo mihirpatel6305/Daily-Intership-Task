@@ -1,1 +1,33 @@
-@import 'tailwindcss';
+/* src/styles/app.css (or wherever you import global CSS) */
+@import "tailwindcss";
+
+/* Optional: enable class-based dark mode (instead of system media) */
+@custom-variant dark (&:where(.dark, .dark *)); /* only if you want to toggle with a .dark class */
+
+/* Centralized design tokens */
+@theme {
+  /* brand + “semantic” colors you can use as bg-brand, text-fg, etc. */
+  --color-brand: oklch(0.65 0.22 265);
+  --color-bg: #ffffff;
+  --color-fg: #0b1220;
+  --color-error-bg: #fee2e2;
+  --color-error-text: #b91c1c;
+  --color-loading-bg: #2563eb;
+  --color-loading-text: #ffffff;
+   --color-card-bg: #bfdbfe;
+}
+
+/* Dark mode overrides for those tokens */
+@layer theme {
+  :root {
+    @variant dark {
+      --color-bg: #0b1220;
+      --color-fg: #e5e7eb;
+      --color-error-bg: #b91c1c;
+      --color-error-text: #fee2e2;
+      --color-loading-bg: #172554;
+      --color-loading-text: #ffffff;
+      --color-card-bg: #2563eb;
+    }
+  }
+}

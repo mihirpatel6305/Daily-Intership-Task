@@ -2,40 +2,43 @@ import { useState } from "react";
 import { Search as SearchIcon } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { cityActions } from "../features/citySlice";
-import { themeActions } from "../features/themeSlice";
+import { toggleTheme } from "../features/themeSlice";
 
 function Search() {
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.theme);
   const [inputValue, setInputValue] = useState("");
 
-  function handleKeyDown(e) {
-    if (e.key === "Enter" && inputValue.trim() !== "") {
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && inputValue.trim()) {
       dispatch(cityActions.changeCity(inputValue.trim()));
     }
-  }
+  };
 
-  function handleSearchClick() {
-    if (inputValue.trim() !== "") {
+  const handleSearchClick = () => {
+    if (inputValue.trim()) {
       dispatch(cityActions.changeCity(inputValue.trim()));
     }
-  }
+  };
 
-  function toggleTheme() {
-    dispatch(themeActions.toggleTheme());
-  }
+  const handleToggleTheme = () => {
+    dispatch(toggleTheme());
+  };
+
+  document.documentElement.classList.toggle("dark", theme === "dark");
 
   return (
     <div className="flex items-center w-full">
       <div
-        className={`flex items-center shadow-md rounded-full px-4 py-2 w-full ${
-          theme === "dark" ? "bg-gray-600" : "bg-white"
-        }`}
+        className="flex items-center shadow-md rounded-full px-4 py-2 w-full"
+        style={{
+          backgroundColor: "var(--color-bg)",
+          color: "var(--color-fg)",
+        }}
       >
         <SearchIcon
-          className={`w-5 h-5  mr-2 ${
-            theme === "dark" ? "text-gray-50" : "text-gray-500"
-          }`}
+          className="w-5 h-5 mr-2"
+          style={{ color: "var(--color-fg)" }}
         />
         <input
           type="text"
@@ -43,33 +46,30 @@ function Search() {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search city"
-          className={`w-full bg-transparent outline-none ${
-            theme === "dark"
-              ? "text-gray-300 placeholder-gray-50"
-              : "text-gray-700 placeholder-gray-400"
-          }`}
+          className="w-full bg-transparent outline-none"
+          style={{ color: "var(--color-fg)", caretColor: "var(--color-fg)" }}
         />
         <button
           onClick={handleSearchClick}
-          className={`ml-2 px-4 py-1 rounded-full transition${
-            theme === "dark"
-              ? "text-blue-950 bg-blue-200 hover:bg-blue-300"
-              : " text-white bg-blue-600 hover:bg-blue-700"
-          }`}
+          className="ml-2 px-4 py-1 rounded-full transition"
+          style={{
+            backgroundColor: "var(--color-brand)",
+            color: "var(--color-loading-text)",
+          }}
         >
           Search
         </button>
-        <button
-          onClick={toggleTheme}
-          className={`ml-2 px-4 py-1  rounded-full  transition ${
-            theme === "dark"
-              ? "text-blue-950 bg-blue-200 hover:bg-blue-300"
-              : " text-white bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {theme === "dark" ? "Light" : "dark"}
-        </button>
       </div>
+      <button
+        onClick={handleToggleTheme}
+        className="ml-2 px-4 py-1 rounded-sm transition"
+        style={{
+          backgroundColor: "var(--color-brand)",
+          color: "var(--color-loading-text)",
+        }}
+      >
+        {theme === "dark" ? "Light" : "Dark"}
+      </button>
     </div>
   );
 }

@@ -7,15 +7,18 @@ function ShowWeather() {
   const { data, isError, isLoading, error } = weather();
   const weatherData = formatWeatherData(data);
   const theme = useSelector((state) => state.theme);
+
+  document.documentElement.classList.toggle("dark", theme === "dark");
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center">
         <div
-          className={` rounded-2xl shadow-lg w-110 p-6 flex flex-col items-center ${
-            theme === "dark"
-              ? "bg-blue-950 text-white"
-              : "bg-blue-600 text-white"
-          }`}
+          className="rounded-2xl shadow-lg w-110 p-6 flex flex-col items-center"
+          style={{
+            backgroundColor: "var(--color-loading-bg)",
+            color: "var(--color-loading-text)",
+          }}
         >
           <p className="animate-pulse text-2xl">Loading weather...</p>
         </div>
@@ -27,11 +30,11 @@ function ShowWeather() {
     return (
       <div className="flex flex-col items-center">
         <div
-          className={` rounded-2xl shadow-lg w-110 p-6 flex flex-col items-center ${
-            theme === "dark"
-              ? "bg-red-700 text-red-100"
-              : "bg-red-100 text-red-700"
-          }`}
+          className="rounded-2xl shadow-lg w-110 p-6 flex flex-col items-center"
+          style={{
+            backgroundColor: "var(--color-error-bg)",
+            color: "var(--color-error-text)",
+          }}
         >
           <p className="font-semibold text-2xl">Failed to load weather</p>
           <p className="text-sm mt-1">
@@ -46,11 +49,11 @@ function ShowWeather() {
     return (
       <div className="flex flex-col items-center">
         <div
-          className={` rounded-2xl shadow-lg w-110 p-6 flex flex-col items-center text-xl ${
-            theme === "dark"
-              ? "bg-gray-600 text-gray-100"
-              : "bg-gray-100 text-gray-700"
-          }`}
+          className="rounded-2xl shadow-lg w-110 p-6 flex flex-col items-center text-xl"
+          style={{
+            backgroundColor: "var(--color-bg)",
+            color: "var(--color-fg)",
+          }}
         >
           <p className="font-semibold">No weather data found</p>
         </div>
@@ -59,13 +62,13 @@ function ShowWeather() {
   }
 
   return (
-    <div className="flex flex-col items-center ">
+    <div className="flex flex-col items-center">
       <div
-        className={` rounded-2xl shadow-lg w-110 p-6 flex flex-row justify-around  ${
-          theme === "dark"
-            ? "bg-blue-400 text-gray-700"
-            : "bg-blue-600 text-white"
-        }`}
+        className="rounded-2xl shadow-lg w-110 p-6 flex flex-row justify-around"
+        style={{
+          backgroundColor: "var(--color-brand)",
+          color: "var(--color-fg)",
+        }}
       >
         <div className="p-1 flex flex-col items-center w-40">
           <div className="w-24 h-24 flex items-center justify-center">
@@ -78,13 +81,7 @@ function ShowWeather() {
             )}
           </div>
 
-          <h1
-            className={`text-lg font-semibold ${
-              theme === "dark" ? "text-gray-700" : "text-white"
-            }`}
-          >
-            {weatherData.city}
-          </h1>
+          <h1 className="text-lg font-semibold">{weatherData.city}</h1>
         </div>
         <div className="p-1 flex flex-col items-center justify-center w-40">
           <h2 className="text-7xl font-bold mt-2">

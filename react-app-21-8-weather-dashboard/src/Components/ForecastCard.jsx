@@ -5,17 +5,17 @@ function ForecastCard({ data }) {
   if (!data) return null;
   const theme = useSelector((state) => state.theme);
 
+  document.documentElement.classList.toggle("dark", theme === "dark");
+
   return (
     <div
-      className={`flex flex-col items-center  shadow rounded-2xl p-3 w-20 ${
-        theme === "dark" ? "bg-blue-600" : "bg-blue-200"
-      }`}
+      className="flex flex-col items-center shadow rounded-2xl p-3 w-20"
+      style={{
+        backgroundColor: "var(--color-card-bg)",
+        color: "var(--color-fg)",
+      }}
     >
-      <p
-        className={`font-medium  ${
-          theme === "dark" ? "text-gray-100" : "text-gray-700"
-        }`}
-      >
+      <p className="font-medium" style={{ color: "var(--color-fg)" }}>
         {data?.day}
       </p>
 
@@ -26,11 +26,8 @@ function ForecastCard({ data }) {
           className="w-12 h-12"
         />
       )}
-      <p
-        className={`font-semibold  ${
-          theme === "dark" ? "text-gray-50" : "text-gray-900"
-        }`}
-      >
+
+      <p className="font-semibold" style={{ color: "var(--color-fg)" }}>
         {Math.round(data.temp)}°
       </p>
     </div>

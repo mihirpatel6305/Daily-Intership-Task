@@ -6,12 +6,14 @@ function ShowForecast() {
   const { data: forecastData, isError, error, isLoading } = forecast();
   const theme = useSelector((state) => state.theme);
 
+  // Apply dark class based on Redux theme
+  document.documentElement.classList.toggle("dark", theme === "dark");
+
   if (isLoading) {
     return (
       <p
-        className={`text-center ${
-          theme === "dark" ? "text-gray-50" : "text-gray-500 "
-        }`}
+        className="text-center"
+        style={{ color: "var(--color-fg)" }}
       >
         Loading forecast...
       </p>
@@ -21,9 +23,8 @@ function ShowForecast() {
   if (isError) {
     return (
       <p
-        className={`text-center ${
-          theme === "dark" ? "text-red-400" : "text-red-500 "
-        }`}
+        className="text-center"
+        style={{ color: "var(--color-error-text)" }}
       >
         Error: {error?.message}
       </p>
@@ -33,12 +34,12 @@ function ShowForecast() {
   return (
     <div>
       <h2
-        className={`text-xl font-semibold mb-4  ${
-          theme === "dark" ? "text-gray-200" : "text-gray-800 "
-        }`}
+        className="text-xl font-semibold mb-4"
+        style={{ color: "var(--color-fg)" }}
       >
         5-Day Forecast
       </h2>
+
       <div className="flex justify-between gap-3">
         {forecastData?.length > 0 ? (
           forecastData.map((data, index) => (
@@ -46,9 +47,8 @@ function ShowForecast() {
           ))
         ) : (
           <p
-            className={`text-center w-full  ${
-              theme === "dark" ? "text-gray-100" : "text-gray-500"
-            }`}
+            className="text-center w-full"
+            style={{ color: "var(--color-fg)" }}
           >
             No forecast available
           </p>
