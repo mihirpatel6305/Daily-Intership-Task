@@ -1,16 +1,12 @@
-let posts = [
-  // { id: 1, title: "First Post", body: "This is the first post." },
-  // { id: 2, title: "Second Post", body: "This is the second post." },
-];
+let posts = [];
 
-// Helper to simulate network latency and random failure
 function simulateNetworkCall(response) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const shouldFail = Math.random() < 0.1; // 10% chance to fail
+      const shouldFail = Math.random() < 0.1;
       if (shouldFail) reject(new Error("Network Error!"));
       else resolve(response);
-    }, 1000 + Math.random() * 1000); // 1–2s delay
+    }, 1000 + Math.random() * 1000);
   });
 }
 
@@ -19,7 +15,7 @@ export const fetchPosts = () => simulateNetworkCall([...posts]);
 export const addPost = (newPost) => {
   const post = { ...newPost, id: Date.now() };
   return simulateNetworkCall(post).then((res) => {
-    posts.push(res); // ✅ only update after success
+    posts.push(res);
     return res;
   });
 };

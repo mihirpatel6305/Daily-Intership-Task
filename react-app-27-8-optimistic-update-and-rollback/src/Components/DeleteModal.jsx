@@ -1,40 +1,24 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deletePost } from "../api/simulatedPostsApi";
 import { useState } from "react";
+import { useDeletePost } from "../hooks/usePostMutations";
 
 function DeleteModal({ isOpen, onClose, postId }) {
-  const queryClient = useQueryClient();
   const [error, setError] = useState(null);
 
-  const mutation = useMutation({
-    mutationFn: deletePost,
-
-    onMutate: async (id) => {
-      await queryClient.cancelQueries(["posts"]);
-
-      const previousPosts = queryClient.getQueryData(["posts"]);
-
-      queryClient.setQueryData(["posts"], (prev) => {
-        return prev.filter((post) => post.id !== id);
-      });
-      
-      onClose(); // Close modal immediately (optimistic update)
-      return { previousPosts };
+  const deleteMutation = useDeletePost({
+    onMutate: () => {
+      onClose();
     },
-
-    onError: (_err, _newPost, context) => {
-      queryClient.setQueryData(["posts"], context.previousPosts);
-      setError("Failed to delete post. Please try again.");
-    },
-
     onSuccess: () => {
-      queryClient.invalidateQueries(["posts"]);
+      setError(null);
+    },
+    onError: () => {
+      setError("Failed to delete post. Please try again.");
     },
   });
 
-  function handleDelete() {
-    mutation.mutate(postId);
-  }
+  const handleDelete = () => {
+    deleteMutation.mutate(postId);
+  };
 
   if (!isOpen) return null;
 
@@ -48,13 +32,18 @@ function DeleteModal({ isOpen, onClose, postId }) {
           Are you sure you want to delete this item? This action cannot be
           undone.
         </p>
+        
+        {error && (
+          <p className="text-red-500 text-sm text-center mb-4">{error}</p>
+        )}
+        
         <div className="flex justify-center gap-4">
           <button
             onClick={handleDelete}
             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            disabled={mutation.isPending}
+            disabled={deleteMutation.isPending}
           >
-            {mutation.isPending ? "Deleting..." : "Delete"}
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
           </button>
           <button
             onClick={onClose}

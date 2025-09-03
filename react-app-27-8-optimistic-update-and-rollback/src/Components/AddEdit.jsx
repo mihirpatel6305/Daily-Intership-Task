@@ -1,17 +1,14 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPost, updatePost } from "../api/simulatedPostsApi";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAddPost, useUpdatePost } from "../hooks/usePostMutations";
 
 function AddEdit() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { state } = useLocation();
-  
-  // Determine if we're editing or adding based on state
+
   const isEditing = Boolean(state?.id);
   const postId = state?.id;
-  
+
   const [formData, setFormData] = useState({
     title: state?.title || "",
     body: state?.body || "",
@@ -20,91 +17,63 @@ function AddEdit() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validation function
+  const addMutation = useAddPost({
+    onMutate: () => {
+      setFormData({ title: "", body: "" });
+      navigate("/");
+      setTimeout(() => setIsSubmitting(false), 0);
+    },
+    onSuccess: () => {
+      setIsSubmitting(false);
+    },
+    onError: () => {
+      setIsSubmitting(false);
+      setErrors({ submit: "Failed to add post. Please try again." });
+    },
+  });
+
+  const editMutation = useUpdatePost({
+    onMutate: () => {
+      navigate("/");
+      setTimeout(() => setIsSubmitting(false), 0);
+    },
+    onSuccess: () => {
+      setIsSubmitting(false);
+    },
+    onError: () => {
+      setIsSubmitting(false);
+      setErrors({ submit: "Failed to update post. Please try again." });
+    },
+  });
+
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
     } else if (formData.title.trim().length < 3) {
       newErrors.title = "Title must be at least 3 characters";
     }
-    
+
     if (!formData.body.trim()) {
       newErrors.body = "Body is required";
     } else if (formData.body.trim().length < 10) {
       newErrors.body = "Body must be at least 10 characters";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Add Post Mutation
-  const addMutation = useMutation({
-    mutationFn: addPost,
-    onMutate: async (newPost) => {
-      setIsSubmitting(true);
-      await queryClient.cancelQueries(["posts"]);
-      const previousPosts = queryClient.getQueryData(["posts"]);
-
-      // Use a more predictable temporary ID
-      const tempId = `temp-${Date.now()}`;
-      queryClient.setQueryData(["posts"], (prev) => {
-        return [...(prev || []), { id: tempId, ...newPost }];
-      });
-
-      navigate("/");
-      return { previousPosts };
-    },
-    onError: (_err, _newPost, context) => {
-      setIsSubmitting(false);
-      queryClient.setQueryData(["posts"], context?.previousPosts);
-      setErrors({ submit: "Failed to add post. Please try again." });
-    },
-    onSuccess: () => {
-      setIsSubmitting(false);
-      queryClient.invalidateQueries(["posts"]);
-      setFormData({ title: "", body: "" });
-    },
-  });
-
-  // Edit Post Mutation
-  const editMutation = useMutation({
-    mutationFn: updatePost,
-    onMutate: async ({ id, editedData }) => {
-      setIsSubmitting(true);
-      await queryClient.cancelQueries(["posts"]);
-
-      const previousPosts = queryClient.getQueryData(["posts"]);
-
-      queryClient.setQueryData(["posts"], (prev) => {
-        if (!prev) return [];
-        return prev.map((post) =>
-          post.id === id ? { ...post, ...editedData } : post
-        );
-      });
-
-      navigate("/");
-      return { previousPosts };
-    },
-    onError: (_err, _variables, context) => {
-      setIsSubmitting(false);
-      queryClient.setQueryData(["posts"], context.previousPosts);
-      setErrors({ submit: "Failed to update post. Please try again." });
-    },
-    onSuccess: () => {
-      setIsSubmitting(false);
-      queryClient.invalidateQueries(["posts"]);
-    },
-  });
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
+
+    setIsSubmitting(true);
+    setErrors({});
 
     const postData = {
       title: formData.title.trim(),
@@ -127,7 +96,6 @@ function AddEdit() {
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -138,9 +106,8 @@ function AddEdit() {
       <h2 className="text-xl font-semibold mb-4 text-gray-800">
         {isEditing ? "Edit Post" : "Add New Post"}
       </h2>
-      
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Title Input */}
         <div>
           <input
             type="text"
@@ -159,7 +126,6 @@ function AddEdit() {
           )}
         </div>
 
-        {/* Body Input */}
         <div>
           <textarea
             value={formData.body}
@@ -178,12 +144,10 @@ function AddEdit() {
           )}
         </div>
 
-        {/* Submit Error */}
         {errors.submit && (
           <p className="text-red-500 text-sm text-center">{errors.submit}</p>
         )}
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <button
             type="submit"
@@ -204,7 +168,7 @@ function AddEdit() {
               ? "Update Post"
               : "Add Post"}
           </button>
-          
+
           <button
             type="button"
             onClick={handleCancel}

@@ -1,4 +1,3 @@
-// Validation constants
 export const VALIDATION_RULES = {
   title: {
     minLength: 3,
@@ -10,7 +9,6 @@ export const VALIDATION_RULES = {
   },
 };
 
-// Error messages
 export const ERROR_MESSAGES = {
   title: {
     required: "Title is required",
@@ -29,9 +27,8 @@ export const ERROR_MESSAGES = {
   },
 };
 
-// API simulation constants
 export const API_CONFIG = {
-  failureRate: 0.1, // 10% chance to fail
-  minDelay: 1000, // 1 second
-  maxDelay: 2000, // 2 seconds
+  failureRate: 0.1,
+  minDelay: 1000,
+  maxDelay: 2000,
 };
