@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchPosts } from "../api/simulatedPostsApi";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import DeleteModal from "./DeleteModal";
 
 function DisplayPosts() {
   const { data: posts, isLoading } = useQuery({
@@ -8,8 +10,18 @@ function DisplayPosts() {
     queryFn: fetchPosts,
   });
   const navigate = useNavigate();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
 
-  console.log("posts>>>", posts);
+  const handleDeleteClick = (post) => {
+    setPostToDelete(post);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setPostToDelete(null);
+  };
 
   if (isLoading) {
     return <div className="text-center mt-10 text-gray-500">Loading...</div>;
@@ -23,14 +35,13 @@ function DisplayPosts() {
 
 
   return (
-    <div className="max-w-3xl mx-auto mt-6 space-y-4">
-      {posts?.length > 0 ? (
-        posts.map((post) => (
+    <>
+      <div className="max-w-3xl mx-auto mt-6 space-y-4">
+        {posts.map((post) => (
           <div
             key={post.id}
             className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col gap-2"
           >
-            {console.log("id>>", post.id)}
             <h2 className="text-lg font-semibold text-gray-800">
               {post.title}
             </h2>
@@ -43,18 +54,22 @@ function DisplayPosts() {
                 Edit
               </button>
               <button
-                onClick={() => navigate(`/delete/${post.id}`, { state: post })}
+                onClick={() => handleDeleteClick(post)}
                 className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition-colors"
               >
                 Delete
               </button>
             </div>
           </div>
-        ))
-      ) : (
-        <div>There is No Post Found</div>
-      )}
-    </div>
+        ))}
+      </div>
+      
+      <DeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        postId={postToDelete?.id}
+      />
+    </>
   );
 }
 
