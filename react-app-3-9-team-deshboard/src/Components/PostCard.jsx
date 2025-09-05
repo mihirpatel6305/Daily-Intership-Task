@@ -1,3 +1,5 @@
+import "react-loading-skeleton/dist/skeleton.css";
+
 function PostCard({ post }) {
   return (
     <div className="cursor-pointer bg-gradient-to-b from-gray-50 to-white border border-gray-300 rounded-lg shadow hover:shadow-lg transition-all duration-300 p-6 m-3 w-96">

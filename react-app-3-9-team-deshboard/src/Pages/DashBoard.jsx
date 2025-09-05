@@ -1,11 +1,11 @@
-import { getAllUsers, getPostsByUserId } from "../api/postsService";
+import { getAllUsers } from "../api/postsService";
 import UserCard from "../Components/UserCard";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import UserCardSkeleton from "../Components/UserCardSkeleton";
 
 function DashBoard() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     data: allUsers = [],
@@ -21,18 +21,22 @@ function DashBoard() {
     navigate(`/user/${id}/posts`);
   }
 
-  if (isLoading) return <div>Loading...</div>;
-
   if (isError) {
     console.error("error:", error);
     return <div>Error:{error}</div>;
   }
 
+  const showSkeleton = isLoading;
+
   return (
     <div className="flex flex-wrap justify-center gap-6 p-4">
-      {allUsers.map((user) => (
-        <UserCard key={user.id} user={user} onClick={handleUserCardClick} />
-      ))}
+      {showSkeleton
+        ? Array(10)
+            .fill(0)
+            .map((_, idx) => <UserCardSkeleton />)
+        : allUsers.map((user) => (
+            <UserCard key={user.id} user={user} onClick={handleUserCardClick} />
+          ))}
     </div>
   );
 }

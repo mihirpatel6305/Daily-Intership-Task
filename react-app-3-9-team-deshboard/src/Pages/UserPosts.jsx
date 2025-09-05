@@ -23,12 +23,12 @@ function UserPosts() {
     console.error("error>>", error);
     return <div className="text-red-800">Error In Fetching Posts</div>;
   }
-  const showSkeleton = isLoading || (posts.length && posts[0].id === 0);
+  const showSkeleton = isLoading;
 
   return (
     <div className="flex flex-wrap justify-center gap-6 p-4">
       {showSkeleton
-        ? Array(3)
+        ? Array(10)
             .fill(0)
             .map((_, idx) => (
               <div
