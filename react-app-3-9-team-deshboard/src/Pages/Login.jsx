@@ -1,14 +1,36 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import login from "../api/authService";
-import { setToken } from "../features/authSlice";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { getAllUsers } from "../api/postsService";
+import { setToken, setUser } from "../features/authSlice";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const location = useLocation();
+  const prevRoute = location?.state?.from?.pathname || "/";
+  // const token = useSelector((state) => state.auth.token);
+
+  const dummyUser = {
+    id: 1,
+    name: "Rajpal Sharma",
+    username: "rajpal123",
+    email: "rajpal123@gmail.com",
+    phone: "+91 98765 43210",
+    website: "www.rajpal.com",
+    address: {
+      street: "MG Road",
+      suite: "Apt. 101",
+      city: "Mumbai",
+      zipcode: "400001",
+    },
+    company: {
+      name: "Rajpal Tech Solutions",
+      catchPhrase: "Innovate and Deliver",
+      bs: "technology solutions",
+    },
+    avatar: "https://i.pravatar.cc/150?img=3",
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -19,12 +41,10 @@ function Login() {
       });
 
       if (data?.token) {
-        dispatch(setToken(data.token));
-        await queryClient.prefetchQuery({
-          queryKey: ["users"],
-          queryFn: getAllUsers,
-        });
-        navigate("/");
+        await dispatch(setToken(data.token));
+        //fetch User info here and set in redux store
+        dispatch(setUser(dummyUser));
+        navigate(prevRoute, { replace: true });
       } else {
         alert("Login failed!");
       }
@@ -33,6 +53,13 @@ function Login() {
       alert("Something went wrong. Try again!");
     }
   }
+
+  //   useEffect(() => {
+  //   if (token) {
+  //     navigate(prevRoute, { replace: true });
+  //   }
+  // }, [token, navigate, prevRoute]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">

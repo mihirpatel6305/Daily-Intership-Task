@@ -2,7 +2,8 @@ import { getAllUsers } from "../api/postsService";
 import UserCard from "../Components/UserCard";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import UserCardSkeleton from "../Components/UserCardSkeleton";
+import UserCardSkeleton from "../Components/Skeleton/UserCardSkeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 function DashBoard() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ function DashBoard() {
       {showSkeleton
         ? Array(10)
             .fill(0)
-            .map((_, idx) => <UserCardSkeleton />)
+            .map((_, idx) => <UserCardSkeleton key={idx} />)
         : allUsers.map((user) => (
             <UserCard key={user.id} user={user} onClick={handleUserCardClick} />
           ))}
