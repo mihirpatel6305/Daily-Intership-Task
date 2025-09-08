@@ -2,43 +2,70 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { clearToken } from "../features/authSlice";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 function NavBar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
     dispatch(clearToken());
     queryClient.clear();
     navigate("/login");
   };
 
   return (
-    <nav className="flex flex-col justify-between h-full min-h-screen bg-gray-50 text-gray-800 w-56 p-4 shadow-md">
-      <div className="flex flex-col mt-4 gap-4">
-        <div
-          onClick={() => navigate("/")}
-          className="text-lg font-medium p-3 rounded-md hover:bg-gray-100 hover:shadow-sm cursor-pointer transition-all"
-        >
-          Dashboard
+    <>
+      <nav className="flex flex-col justify-between h-full min-h-screen bg-gray-50 text-gray-800 w-56 p-4 shadow-md">
+        <div className="flex flex-col mt-4 gap-4">
+          <div
+            onClick={() => navigate("/")}
+            className="text-lg font-medium p-3 rounded-md hover:bg-gray-100 hover:shadow-sm cursor-pointer transition-all"
+          >
+            Dashboard
+          </div>
+
+          <div
+            onClick={() => navigate("/profile")}
+            className="text-lg font-medium p-3 rounded-md hover:bg-gray-100 hover:shadow-sm cursor-pointer transition-all"
+          >
+            Profile
+          </div>
         </div>
 
-        <div
-          onClick={() => navigate("/profile")}
-          className="text-lg font-medium p-3 rounded-md hover:bg-gray-100 hover:shadow-sm cursor-pointer transition-all"
+        <button
+          onClick={() => setIsLogoutOpen(true)}
+          className="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 hover:shadow-sm transition-all"
         >
-          Profile
+          Logout
+        </button>
+      </nav>
+      {isLogoutOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
+            <h1 className="text-lg font-semibold mb-4">
+              Are you sure you want to logout?
+            </h1>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={confirmLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-all"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setIsLogoutOpen(false)}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-all"
+              >
+                No
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <button
-        onClick={handleLogout}
-        className="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 hover:shadow-sm transition-all"
-      >
-        Logout
-      </button>
-    </nav>
+      )}
+    </>
   );
 }
 

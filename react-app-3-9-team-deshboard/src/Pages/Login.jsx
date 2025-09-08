@@ -1,15 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
 import login from "../api/authService";
 import { setToken, setUser } from "../features/authSlice";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const prevRoute = location?.state?.from?.pathname || "/";
-  // const token = useSelector((state) => state.auth.token);
 
   const dummyUser = {
     id: 1,
@@ -54,12 +52,6 @@ function Login() {
     }
   }
 
-  //   useEffect(() => {
-  //   if (token) {
-  //     navigate(prevRoute, { replace: true });
-  //   }
-  // }, [token, navigate, prevRoute]);
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
@@ -81,6 +73,15 @@ function Login() {
             Login
           </button>
         </form>
+        <p className="text-sm text-gray-600 mt-4 text-center">
+          Don’t have an account?{" "}
+          <Link
+            to="/signup"
+            className="text-blue-500 hover:underline font-medium"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   );
