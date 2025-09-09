@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import getMessageFromNumber from "../utils/getMessageFromNumber";
 
-function useWebSocket() {
+export default function useWebSocket() {
+  const ws = useRef(null);
   const reconnectRef = useRef(null);
-  function connectWebsocket() {
+  const [messages, setMessages] = useState([]);
+
+  const connectWebsocket = () => {
     if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
       ws.current.close();
     }
@@ -40,23 +43,25 @@ function useWebSocket() {
         ]);
     };
 
-    ws.current.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
-  }
+    ws.current.onerror = (err) => console.error("WebSocket error:", err);
+  };
+
+  const sendMessage = (msg) => {
+    if (msg.trim() && ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(msg);
+      setMessages((prev) => [...prev, { text: msg, type: "sent" }]);
+    }
+  };
 
   useEffect(() => {
     connectWebsocket();
 
     return () => {
-      if (reconnectRef.current) {
-        clearTimeout(reconnectRef.current);
-      }
-      if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+      if (reconnectRef.current) clearTimeout(reconnectRef.current);
+      if (ws.current && ws.current.readyState !== WebSocket.CLOSED)
         ws.current.close();
-      }
     };
   }, []);
-}
 
-export default useWebSocket;
+  return { messages, setMessages, sendMessage };
+}
