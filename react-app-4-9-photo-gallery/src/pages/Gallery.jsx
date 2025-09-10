@@ -27,10 +27,20 @@ function Gallery() {
               className="aspect-square bg-gray-100 rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden"
             >
               <LazyImage
-                src={img.url}
+                src={img.laptop || img.url}
                 lowResSrc={img.lowRes}
                 alt="uploaded"
-                className="rounded-lg"
+                className="rounded-lg object-cover"
+                srcSet={`
+                  ${img.mobile} 400w,
+                  ${img.tablet} 800w,
+                  ${img.laptop} 1200w
+                `}
+                sizes="
+                  (max-width: 600px) 400px,
+                  (max-width: 1024px) 800px,
+                  1200px
+                "
               />
             </div>
           ))}

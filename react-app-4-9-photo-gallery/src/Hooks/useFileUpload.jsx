@@ -1,7 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import getCloudinaryUrl from "../utils/getCloudinaryUrl";
+const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
+const PRESET_ID = import.meta.env.VITE_PRESET_ID;
 
 export function useFileUpload() {
   const [progress, setProgress] = useState(0);
@@ -10,8 +12,6 @@ export function useFileUpload() {
   );
   const controllerRef = useRef(null);
 
-  const navigate = useNavigate();
-
   const mutation = useMutation({
     mutationFn: async ({ file, tempId }) => {
       const controller = new AbortController();
@@ -19,28 +19,37 @@ export function useFileUpload() {
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", "photoGallery");
+      formData.append("upload_preset", PRESET_ID);
 
-      const res = await axios.post(
-        "https://api.cloudinary.com/v1_1/dmwx0rowk/image/upload",
-        formData,
-        {
-          onUploadProgress: (uploadPrgress) => {
-            setProgress(
-              Math.round((uploadPrgress.loaded / uploadPrgress.total) * 100)
-            );
-          },
-          signal: controller.signal,
-        }
-      );
+      const res = await axios.post(CLOUDINARY_URL, formData, {
+        onUploadProgress: (uploadProgress) => {
+          setProgress(
+            Math.round((uploadProgress.loaded / uploadProgress.total) * 100)
+          );
+        },
+        signal: controller.signal,
+      });
 
       if (res?.data?.secure_url) {
         const fullUrl = res.data.secure_url;
 
-        const lowResUrl = fullUrl.replace(
-          "/upload/",
-          "/upload/w_20,e_blur:200,q_30/"
-        );
+        const lowResUrl = getCloudinaryUrl(fullUrl, {
+          width: 20,
+          quality: 30,
+        });
+        const mobileUrl = getCloudinaryUrl(fullUrl, {
+          width: 150,
+          quality: 80,
+        });
+        const tabletUrl = getCloudinaryUrl(fullUrl, {
+          width: 400,
+          quality: 80,
+        });
+        const laptopUrl = getCloudinaryUrl(fullUrl, {
+          width: 800,
+          quality: 80,
+        });
+
         setGallery((prev) => {
           const updatedGallery = prev.map((img) =>
             img.id === tempId
@@ -48,6 +57,9 @@ export function useFileUpload() {
                   ...img,
                   url: fullUrl,
                   lowRes: lowResUrl,
+                  mobile: mobileUrl,
+                  tablet: tabletUrl,
+                  laptop: laptopUrl,
                   status: "completed",
                 }
               : img
@@ -73,7 +85,18 @@ export function useFileUpload() {
 
   function handleUpload(file) {
     if (!file) return;
-    // navigate("/gallery");
+
+    const validTypes = ["image/jpeg", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      alert("Only jpeg and jpg fomat Allowed");
+      return false;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert("Maximum 2 MB is Allowed");
+      return false;
+    }
     const tempId = Date.now();
 
     const newImage = {
@@ -94,9 +117,9 @@ export function useFileUpload() {
   function handleCancel() {
     if (controllerRef.current) {
       controllerRef.current.abort();
-      console.log("Upload cancelled");
+      setProgress(0);
     }
   }
 
-  return { mutation, progress, handleUpload, handleCancel };
+  return { mutation, progress, handleUpload, handleCancel, gallery };
 }

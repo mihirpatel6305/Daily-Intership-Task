@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-function LazyImage({ src, lowResSrc, alt, className }) {
+function LazyImage({ src, lowResSrc, alt, className, srcSet, sizes }) {
   const imgRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -38,6 +38,8 @@ function LazyImage({ src, lowResSrc, alt, className }) {
       {isVisible && (
         <img
           src={src}
+          srcSet={srcSet}
+          sizes={sizes}
           alt={alt}
           onLoad={() => setLoaded(true)}
           className={`w-full h-full object-cover transition-opacity duration-700 ${
