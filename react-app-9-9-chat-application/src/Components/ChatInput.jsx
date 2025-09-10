@@ -1,8 +1,15 @@
+import { useQueryClient } from "@tanstack/react-query";
+import handleReadAll from "../utils/handleReadAll";
+
 function ChatInput({ message, setMessage, sendMessage }) {
+  const queryClient = useQueryClient();
   const handleSend = () => {
     if (message.trim()) {
-      sendMessage(message);
-      setMessage("");
+      const isMsgBlock = sendMessage(message);
+      handleReadAll(queryClient);
+      if (!isMsgBlock) {
+        setMessage("");
+      }
     }
   };
   return (

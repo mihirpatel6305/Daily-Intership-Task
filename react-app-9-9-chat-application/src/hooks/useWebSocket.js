@@ -61,6 +61,9 @@ function useWebSocket() {
         ...prev,
         { text: msg, type: "sent" },
       ]);
+    } else {
+      alert("Connection is Closed");
+      return msg;
     }
   };
 

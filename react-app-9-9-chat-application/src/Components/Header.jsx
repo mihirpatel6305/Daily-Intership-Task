@@ -1,21 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import handleReadAll from "../utils/handleReadAll";
 
 function Header() {
   const queryClient = useQueryClient();
   const messages = queryClient.getQueryData(["messages"]) || [];
   const unreadCount = messages.filter((msg) => !msg.read).length;
-
-  function handleReadAll() {
-    queryClient.setQueryData(["messages"], (prev = []) => {
-      return prev.map((msg) => {
-        if (!msg?.read) {
-          return { ...msg, read: true };
-        }
-        return msg;
-      });
-    });
-  }
 
   return (
     <div className="flex items-center justify-between p-3 border-b bg-white shadow-sm">
@@ -30,7 +19,7 @@ function Header() {
         </button>
 
         <button
-          onClick={handleReadAll}
+          onClick={() => handleReadAll(queryClient)}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors"
         >
           Mark All Read

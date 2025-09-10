@@ -24,7 +24,10 @@ function MessageList() {
   }, [lastMessage]);
 
   return (
-    <div className="relative flex-1 bg-gray-50 overflow-y-auto p-3 space-y-2 scrollbar-hide">
+    <div
+      style={{ scrollbarWidth: "none" }}
+      className="relative flex-1 bg-gray-50 overflow-y-auto p-3 space-y-2 scrollbar-hide"
+    >
       {readMessages.map((msgObj, index) => (
         <div
           key={index}
@@ -34,7 +37,8 @@ function MessageList() {
               : "bg-gray-200 text-gray-800 self-start mr-auto"
           }`}
         >
-          {msgObj.type === "sent" ? "You: " : "Server: "} {msgObj.text}
+          {msgObj.type === "sent" ? "You: " : "Server: "}
+          {msgObj.text}
         </div>
       ))}
 
@@ -63,7 +67,7 @@ function MessageList() {
 
       <button
         onClick={scrollToBottom}
-        className="fixed bottom-30 right-[37vw] p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800 transition z-50"
+        className="fixed bottom-30 right-[36vw] p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800 transition z-50"
       >
         ⮟
       </button>
