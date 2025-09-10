@@ -1,19 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import getMessageFromNumber from "../utils/getMessageFromNumber";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+const WS_URL = import.meta.env.VITE_WS_URL;
 
-export default function useWebSocket() {
+function useWebSocket() {
+  const queryClient = useQueryClient();
   const ws = useRef(null);
   const reconnectRef = useRef(null);
-  const [messages, setMessages] = useState([]);
+
+  const { data: messages = [] } = useQuery({
+    queryKey: ["messages"],
+    queryFn: async () => [],
+    staleTime: Infinity,
+  });
 
   const connectWebsocket = () => {
     if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
       ws.current.close();
     }
 
-    ws.current = new WebSocket(
-      "wss://ws.finnhub.io?token=d2rc4bpr01qlk22slkr0d2rc4bpr01qlk22slkrg"
-    );
+    ws.current = new WebSocket(WS_URL);
 
     ws.current.onopen = () => {
       console.log("Connected to websocket");
@@ -36,11 +42,13 @@ export default function useWebSocket() {
       const data = JSON.parse(event.data);
       const timeStr = data?.data[0]?.t;
       const dummyReceivedMsg = getMessageFromNumber(timeStr);
-      timeStr &&
-        setMessages((prev) => [
+
+      if (timeStr) {
+        queryClient.setQueryData(["messages"], (prev = []) => [
           ...prev,
-          { text: dummyReceivedMsg, type: "received" },
+          { text: dummyReceivedMsg, type: "received", read: false },
         ]);
+      }
     };
 
     ws.current.onerror = (err) => console.error("WebSocket error:", err);
@@ -49,7 +57,10 @@ export default function useWebSocket() {
   const sendMessage = (msg) => {
     if (msg.trim() && ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(msg);
-      setMessages((prev) => [...prev, { text: msg, type: "sent" }]);
+      queryClient.setQueryData(["messages"], (prev = []) => [
+        ...prev,
+        { text: msg, type: "sent" },
+      ]);
     }
   };
 
@@ -63,5 +74,7 @@ export default function useWebSocket() {
     };
   }, []);
 
-  return { messages, setMessages, sendMessage };
+  return { sendMessage };
 }
+
+export default useWebSocket;

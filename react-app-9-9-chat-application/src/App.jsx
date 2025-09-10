@@ -2,17 +2,17 @@ import { useState } from "react";
 import MessageList from "./Components/MessageList";
 import ChatInput from "./Components/ChatInput";
 import useWebSocket from "./hooks/useWebSocket";
+import Header from "./Components/Header";
 
 function App() {
-  const { messages, sendMessage } = useWebSocket();
+  const { sendMessage } = useWebSocket();
   const [message, setMessage] = useState("");
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100 p-4">
       <div className="w-full max-w-md h-[90vh] bg-white rounded-lg shadow-md flex flex-col">
-        <h1 className="text-2xl font-bold p-3 border-b">💬 Chat App</h1>
-
-        <MessageList messages={messages} />
+        <Header />
+        <MessageList />
         <ChatInput
           message={message}
           setMessage={setMessage}

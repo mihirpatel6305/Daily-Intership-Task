@@ -1,4 +1,4 @@
-export default function ChatInput({ message, setMessage, sendMessage }) {
+function ChatInput({ message, setMessage, sendMessage }) {
   const handleSend = () => {
     if (message.trim()) {
       sendMessage(message);
@@ -24,3 +24,5 @@ export default function ChatInput({ message, setMessage, sendMessage }) {
     </div>
   );
 }
+
+export default ChatInput;
