@@ -6,32 +6,42 @@ function UsersList({ users }) {
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
 
+  const onlineUser = useSelector((state) => state.user.onlineUser);
+  const usersWithOnlineStatus = users.map((user) => ({
+    user,
+    isOnline: onlineUser.includes(user._id),
+  }));
+
+  console.log(usersWithOnlineStatus);
+
   return (
     <div className="overflow-y-auto max-h-[500px]">
       <ul>
-        {users.map((user) => {
-          const isCurrentUser = user._id === loggedInUserId;
-
+        {usersWithOnlineStatus.map((userObj) => {
           return (
             <li
-              key={user._id}
-              className={`flex items-center gap-3 p-3 rounded-md mb-1 cursor-pointer hover:bg-gray-200 transition ${
-                isCurrentUser ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              key={userObj.user._id}
+              className="flex items-center gap-3 p-3 rounded-md mb-1 cursor-pointer hover:bg-gray-200 transition"
               onClick={() =>
-                !isCurrentUser && navigate("/chatWindow", { state: { user } })
+                navigate("/chatWindow", { state: { user: userObj?.user } })
               }
             >
               <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-lg">
-                {user.name?.charAt(0).toUpperCase()}
+                {userObj?.user?.name?.charAt(0).toUpperCase()}
               </div>
 
               <div className="flex flex-col">
-                <span className="font-medium text-gray-800">{user.name}</span>
-                {!isCurrentUser && (
-                  <span className="text-sm text-gray-500">Click to chat</span>
-                )}
+                <span className="font-medium text-gray-800">
+                  {userObj?.user.name}
+                </span>
+                <span className="text-sm text-gray-500">Click to chat</span>
               </div>
+
+              {userObj.isOnline && (
+                <span className="ml-auto text-green-500 font-medium">
+                  Online
+                </span>
+              )}
             </li>
           );
         })}

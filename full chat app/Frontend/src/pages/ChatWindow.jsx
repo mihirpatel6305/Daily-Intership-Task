@@ -62,6 +62,10 @@ function ChatWindow() {
       dispatch(addMessage({ receiverId: msg?.senderId, message: msg }));
     });
 
+    // socketRef.current.on("onlineUser", (onlineUserlist) => {
+    //   console.log("onlineUserList>>", onlineUserlist);
+    // });
+
     return () => {
       if (socketRef.current) socketRef.current.off("private-message");
     };

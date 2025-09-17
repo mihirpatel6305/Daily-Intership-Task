@@ -11,3 +11,14 @@ export const initSocket = (userId) => {
 
   return socket;
 };
+
+// export const getSocket = () => {
+//   if (!socket) {
+//     console.error("Socket not initialized. Call initSocket first!");
+//   }
+//   return socket;
+// };
+
+// export const disconnectSocket = () => {
+//   if (socket) socket.disconnect();
+// };

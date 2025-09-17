@@ -1,12 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAllUsers } from "../api/user";
 import UsersList from "../components/UsersList";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { initSocket } from "../services/socketService";
+import { setOnlineUser } from "../feature/userSlice";
 
 function Home() {
   const [users, setUsers] = useState([]);
   const [isOpenLogout, setIsOpenLogout] = useState(false);
   const navigate = useNavigate();
+
+  const socketRef = useRef(null);
+
+  const dispatch = useDispatch();
+  const loggedInUser = useSelector((state) => state.user.currentUser);
+  const loggedInUserId = loggedInUser?._id;
+
+  useEffect(() => {
+    if (!loggedInUserId) return;
+
+    socketRef.current = initSocket(loggedInUserId);
+
+    socketRef.current.on("onlineUser", (onlineUserlist) => {
+      console.log("onlineUserList>>", onlineUserlist);
+      dispatch(setOnlineUser(onlineUserlist));
+    });
+
+    return () => {
+      if (socketRef.current) socketRef.current.off("onlineUser");
+    };
+  }, [loggedInUserId, dispatch]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -21,6 +45,10 @@ function Home() {
   }, []);
 
   const handleLogout = () => {
+    if (socketRef.current) {
+      console.log("socket disconnected");
+      socketRef.current.disconnect();
+    }
     localStorage.clear("token");
     navigate("/login");
   };
