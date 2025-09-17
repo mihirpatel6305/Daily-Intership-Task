@@ -11,7 +11,3 @@ export const initSocket = (userId) => {
 
   return socket;
 };
-
-export const disconnectSocket = () => {
-  if (socket) socket.disconnect();
-};

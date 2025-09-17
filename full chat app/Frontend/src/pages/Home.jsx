@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { getAllUsers } from "../api/user";
 import UsersList from "../components/UsersList";
+import { useNavigate } from "react-router-dom";
+
 function Home() {
   const [users, setUsers] = useState([]);
+  const [isOpenLogout, setIsOpenLogout] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchUsers() {
@@ -17,8 +21,6 @@ function Home() {
   }, []);
 
   const handleLogout = () => {
-    disconnectSocket();
-    dispatch(clearMessages());
     localStorage.clear("token");
     navigate("/login");
   };
@@ -29,7 +31,7 @@ function Home() {
         <div className="flex justify-between items-center p-5 bg-green-900 text-white rounded-t-lg">
           <h1 className="text-lg font-bold">Chat App</h1>
           <button
-            onClick={handleLogout}
+            onClick={() => setIsOpenLogout(true)}
             className="bg-red-500 px-3 py-1 rounded text-sm"
           >
             Logout
@@ -48,6 +50,28 @@ function Home() {
           <UsersList users={users} />
         </div>
       </div>
+      {isOpenLogout && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-80">
+            <h2 className="text-lg font-semibold mb-4">Confirm Logout</h2>
+            <p className="mb-6">Are you sure you want to log out?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsOpenLogout(false)}
+                className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
