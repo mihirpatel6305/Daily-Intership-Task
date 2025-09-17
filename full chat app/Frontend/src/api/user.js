@@ -8,3 +8,12 @@ export const getAllUsers = async () => {
     throw error.response?.data || error.message;
   }
 };
+
+export const getProfile = async () => {
+  try {
+    const res = await api.get("/user/me");
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};

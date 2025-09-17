@@ -22,7 +22,7 @@ function UsersList({ users }) {
                 !isCurrentUser && navigate("/chatWindow", { state: { user } })
               }
             >
-              <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-lg">
                 {user.name?.charAt(0).toUpperCase()}
               </div>
 

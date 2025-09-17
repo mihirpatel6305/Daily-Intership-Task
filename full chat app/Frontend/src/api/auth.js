@@ -19,13 +19,3 @@ export const signinUser = async (name, email, password) => {
     throw error.response?.data || error.message;
   }
 };
-
-export const logoutUser = () => {
-  try {
-    localStorage.removeItem("token");
-    return { success: true };
-  } catch (error) {
-    console.error("Error during logout:", error);
-    return { success: false, error: error.message };
-  }
-};

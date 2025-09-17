@@ -1,21 +1,44 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getPrevMessage } from "../api/messages";
 
-const initialState = {
-  messages: [],
-};
+export const fetchMessages = createAsyncThunk(
+  "messages/fetchMessages",
+  async (receiverId) => {
+    const data = await getPrevMessage(receiverId);
+    return { receiverId, messages: data };
+  }
+);
 
-const messageSlice = createSlice({
+const messagesSlice = createSlice({
   name: "messages",
-  initialState,
+  initialState: {
+    messages: {},
+    loading: false,
+  },
   reducers: {
     addMessage: (state, action) => {
-      state.messages.push(action.payload);
+      const { receiverId, message } = action.payload;
+      if (!state.messages[receiverId]) {
+        state.messages[receiverId] = [];
+      }
+      state.messages[receiverId].push(message);
     },
-    clearMessages: (state) => {
-      state.messages = [];
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMessages.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchMessages.fulfilled, (state, action) => {
+        state.loading = false;
+        const { receiverId, messages } = action.payload;
+        state.messages[receiverId] = messages || [];
+      })
+      .addCase(fetchMessages.rejected, (state) => {
+        state.loading = false;
+      });
   },
 });
 
-export const { addMessage, clearMessages } = messageSlice.actions;
-export default messageSlice.reducer;
+export const { addMessage } = messagesSlice.actions;
+export default messagesSlice.reducer;

@@ -1,33 +1,8 @@
 import { useEffect, useState } from "react";
 import { getAllUsers } from "../api/user";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import UsersList from "../components/UsersList";
-import { disconnectSocket, initSocket } from "../services/socketService";
-import { addMessage, clearMessages } from "../feature/messageSlice";
-
 function Home() {
   const [users, setUsers] = useState([]);
-  const loggedInUser = useSelector((state) => state.user.currentUser);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const loggedInUserId = loggedInUser?._id;
-
-  useEffect(() => {
-    if (!loggedInUserId) return;
-
-    const socket = initSocket(loggedInUserId);
-
-    socket.on("private-message", (msg) => {
-      dispatch(addMessage(msg));
-    });
-
-    return () => {
-      disconnectSocket();
-      dispatch(clearMessages());
-    };
-  }, [loggedInUserId, dispatch]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -48,12 +23,10 @@ function Home() {
     navigate("/login");
   };
 
-  if (!loggedInUser) return <p>Loading user info...</p>;
-
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg flex flex-col h-[80vh]">
-        <div className="flex justify-between items-center p-4 bg-green-600 text-white">
+        <div className="flex justify-between items-center p-5 bg-green-900 text-white rounded-t-lg">
           <h1 className="text-lg font-bold">Chat App</h1>
           <button
             onClick={handleLogout}

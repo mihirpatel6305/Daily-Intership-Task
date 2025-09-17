@@ -8,6 +8,6 @@ import {
 const routes = express.Router();
 
 routes.post("/sendMessage/:id", ProtectedRoutes, sendMessage);
-routes.get("/getMessage/:id", ProtectedRoutes, getChatMessage);
+routes.get("/:id", ProtectedRoutes, getChatMessage);
 
 export default routes;
