@@ -1,13 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { resetUnreadMessage } from "../api/user";
 
 function UsersList({ users }) {
   const navigate = useNavigate();
-
-  async function handleClick(user) {
-    await resetUnreadMessage(user?._id);
-    navigate("/chatWindow", { state: { user } });
-  }
 
   if (!users || users.length === 0) {
     return (
@@ -24,7 +18,7 @@ function UsersList({ users }) {
           <li
             key={user._id}
             className="flex items-center gap-3 p-3 rounded-md mb-1 cursor-pointer hover:bg-gray-200 transition relative"
-            onClick={() => handleClick(user)}
+            onClick={() => navigate("/chatWindow", { state: { user } })}
           >
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-xl">

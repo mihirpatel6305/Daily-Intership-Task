@@ -4,6 +4,9 @@ import { initSocket } from "../services/socketService";
 import { addMessage, fetchMessages } from "../feature/messageSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
+import { resetUnreadMessage } from "../api/user";
+import { formatTime } from "../services/formatTime";
+import formatDateString from "../services/formatDateString";
 
 function ChatWindow() {
   const [input, setInput] = useState("");
@@ -68,6 +71,20 @@ function ChatWindow() {
     }
   }, [selectedUser, dispatch]);
 
+  useEffect(() => {
+    const resetMessage = async () => {
+      if (selectedUser?._id) {
+        try {
+          await resetUnreadMessage(selectedUser._id);
+        } catch (error) {
+          console.error("Error resetting unread messages:", error);
+        }
+      }
+    };
+
+    resetMessage();
+  }, [selectedUser?._id]);
+
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -86,27 +103,49 @@ function ChatWindow() {
           <span className="text-lg">{selectedUser.name}</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div
+          style={{ scrollbarWidth: "none" }}
+          className="flex-1 overflow-y-auto p-4 space-y-2"
+        >
           {loading ? (
             <Loader />
           ) : (
             messages.map((msg, i) => {
               const isSender = msg.senderId === loggedInUserId;
+              const currentDate = formatDateString(msg.createdAt);
+              const prevDate = formatDateString(messages[i - 1]?.createdAt);
+
+              console.log("currentDate>>>", currentDate);
+              console.log("prevDate>>>", prevDate);
+
               return (
-                <div
-                  key={i}
-                  className={`flex ${
-                    isSender ? "justify-end" : "justify-start"
-                  }`}
-                >
+                <div key={i}>
+                  {(i === 0 || currentDate !== prevDate) && currentDate && (
+                    <div className="text-center text-gray-500 text-sm my-2">
+                      {currentDate}
+                    </div>
+                  )}
                   <div
-                    className={`max-w-[70%] p-2 rounded-lg ${
-                      isSender
-                        ? "bg-green-100 text-gray-950"
-                        : "bg-gray-200 text-gray-800"
-                    }`}
+                    className={`flex ${
+                      isSender ? "justify-end" : "justify-start"
+                    } mb-2`}
                   >
-                    {msg.text}
+                    <div
+                      className={`max-w-[70%] px-3 py-2 rounded-lg text-sm leading-snug ${
+                        isSender
+                          ? "bg-green-200 text-gray-900 rounded-bl-lg rounded-tr-none"
+                          : "bg-gray-200 text-gray-900 rounded-br-lg rounded-tl-none"
+                      }`}
+                    >
+                      <div className="flex items-end gap-2">
+                        <span className="break-words">{msg.text}</span>
+                        <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                          {msg?.createdAt
+                            ? formatTime(msg?.createdAt)
+                            : formatTime(new Date())}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
