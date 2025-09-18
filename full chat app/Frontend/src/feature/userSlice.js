@@ -4,7 +4,7 @@ const userSlice = createSlice({
   name: "user",
   initialState: {
     currentUser: {},
-    onlineUser: [],
+    onlineUsers: [],
   },
   reducers: {
     setUser: (state, action) => {
@@ -14,7 +14,7 @@ const userSlice = createSlice({
       state.currentUser = null;
     },
     setOnlineUser: (state, action) => {
-      state.onlineUser = action.payload;
+      state.onlineUsers = action.payload;
     },
   },
 });

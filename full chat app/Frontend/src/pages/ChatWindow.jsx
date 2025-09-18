@@ -25,15 +25,6 @@ function ChatWindow() {
   const loading = useSelector((state) => state.messages.loading);
   const error = useSelector((state) => state.messages.error);
 
-  console.log("messages>>>", messages);
-
-  const filteredMessages = messages?.filter(
-    (msg) =>
-      (msg.senderId === loggedInUserId &&
-        msg.receiverId === selectedUser._id) ||
-      (msg.senderId === selectedUser._id && msg.receiverId === loggedInUserId)
-  );
-
   function handleSend() {
     if (!input.trim()) return;
 
@@ -62,10 +53,6 @@ function ChatWindow() {
       dispatch(addMessage({ receiverId: msg?.senderId, message: msg }));
     });
 
-    // socketRef.current.on("onlineUser", (onlineUserlist) => {
-    //   console.log("onlineUserList>>", onlineUserlist);
-    // });
-
     return () => {
       if (socketRef.current) socketRef.current.off("private-message");
     };
@@ -73,7 +60,7 @@ function ChatWindow() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [filteredMessages]);
+  }, [messages]);
 
   useEffect(() => {
     if (selectedUser?._id) {
@@ -103,7 +90,7 @@ function ChatWindow() {
           {loading ? (
             <Loader />
           ) : (
-            filteredMessages.map((msg, i) => {
+            messages.map((msg, i) => {
               const isSender = msg.senderId === loggedInUserId;
               return (
                 <div

@@ -9,6 +9,7 @@ import { setOnlineUser } from "../feature/userSlice";
 function Home() {
   const [users, setUsers] = useState([]);
   const [isOpenLogout, setIsOpenLogout] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   const socketRef = useRef(null);
@@ -17,18 +18,30 @@ function Home() {
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
 
+  const onlineUsers = useSelector((state) => state.user.onlineUsers);
+  const usersWithOnlineStatus = users.map((user) => ({
+    ...user,
+    isOnline: onlineUsers.includes(user._id),
+  }));
+
+  const filteredUsers = usersWithOnlineStatus.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   useEffect(() => {
     if (!loggedInUserId) return;
 
     socketRef.current = initSocket(loggedInUserId);
 
     socketRef.current.on("onlineUser", (onlineUserlist) => {
-      console.log("onlineUserList>>", onlineUserlist);
       dispatch(setOnlineUser(onlineUserlist));
     });
 
     return () => {
-      if (socketRef.current) socketRef.current.off("onlineUser");
+      if (socketRef.current) {
+        socketRef.current.off("onlineUser");
+        socketRef.current.disconnect();
+      }
     };
   }, [loggedInUserId, dispatch]);
 
@@ -46,10 +59,9 @@ function Home() {
 
   const handleLogout = () => {
     if (socketRef.current) {
-      console.log("socket disconnected");
       socketRef.current.disconnect();
     }
-    localStorage.clear("token");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
@@ -71,11 +83,13 @@ function Home() {
             type="text"
             placeholder="Search or start new chat"
             className="w-full p-2 rounded-md border border-gray-300 focus:outline-none text-sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <UsersList users={users} />
+          <UsersList users={filteredUsers} />
         </div>
       </div>
       {isOpenLogout && (
