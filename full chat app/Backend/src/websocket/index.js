@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { saveMessage } from "../controllers/messageController.js";
+import { updateUnreadMessage } from "../controllers/userController.js";
 
 function setupSocketIO(server) {
   const io = new Server(server, {
@@ -23,6 +24,8 @@ function setupSocketIO(server) {
 
     socket.on("private-message", async ({ senderId, receiverId, text }) => {
       const message = await saveMessage({ senderId, receiverId, text });
+      //  update unreadCount
+      await updateUnreadMessage(senderId, receiverId);
 
       const receiverSocketId = userSocketMap.get(receiverId);
       if (receiverSocketId) {

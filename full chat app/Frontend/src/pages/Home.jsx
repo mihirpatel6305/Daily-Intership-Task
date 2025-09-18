@@ -18,10 +18,13 @@ function Home() {
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
 
+  const unreadMessagesObj = loggedInUser?.unreadMessages || {};
+
   const onlineUsers = useSelector((state) => state.user.onlineUsers);
   const usersWithOnlineStatus = users.map((user) => ({
     ...user,
     isOnline: onlineUsers.includes(user._id),
+    unreadMessages: unreadMessagesObj[user._id],
   }));
 
   const filteredUsers = usersWithOnlineStatus.filter((user) =>
