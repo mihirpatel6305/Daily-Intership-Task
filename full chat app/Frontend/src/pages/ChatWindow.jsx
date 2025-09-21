@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { initSocket } from "../services/socketService";
+import { initSocket, getSocket } from "../services/socketService";
 import { addMessage, fetchMessages } from "../feature/messageSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
