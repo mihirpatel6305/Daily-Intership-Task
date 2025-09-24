@@ -17,6 +17,19 @@ const messageSchema = new mongoose.Schema(
       required: true,
       minlength: 1,
     },
+    image: {
+      type: String,
+      default: null,
+    },
+    messageType: {
+      type: String,
+      enum: ["text", "image"],
+      default: "text",
+    },
+    isUnread: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

@@ -5,13 +5,16 @@ import SignUp from "../pages/Signup";
 import ProtectedRoutes from "./ProtectedRoutes";
 import PublicRoutes from "./PublicRoutes";
 import ChatWindow from "../pages/ChatWindow";
+import { SocketProvider } from "../context/SocketContext";
 
 function AllRoutes() {
   return (
     <Routes>
-      <Route element={<ProtectedRoutes />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/chatWindow" element={<ChatWindow />} />
+      <Route element={<SocketProvider />}>
+        <Route element={<ProtectedRoutes />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/chatWindow" element={<ChatWindow />} />
+        </Route>
       </Route>
       <Route element={<PublicRoutes />}>
         <Route path="/login" element={<Login />} />

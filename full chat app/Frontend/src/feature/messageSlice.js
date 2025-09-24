@@ -1,13 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getPrevMessage } from "../api/messages";
-
-export const fetchMessages = createAsyncThunk(
-  "messages/fetchMessages",
-  async (receiverId) => {
-    const data = await getPrevMessage(receiverId);
-    return { receiverId, messages: data };
-  }
-);
 
 const messagesSlice = createSlice({
   name: "messages",
@@ -23,22 +14,33 @@ const messagesSlice = createSlice({
       }
       state.messages[receiverId].push(message);
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchMessages.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.loading = false;
-        const { receiverId, messages } = action.payload;
-        state.messages[receiverId] = messages || [];
-      })
-      .addCase(fetchMessages.rejected, (state) => {
-        state.loading = false;
-      });
+    setMessages: (state, action) => {
+      const { receiverId, messages } = action.payload;
+
+      if (Array.isArray(messages)) {
+        const reversedMessages = [...messages].reverse();
+        state.messages[receiverId] = [...reversedMessages];
+      } else {
+        state.messages[receiverId] = [];
+      }
+    },
+    addPrevMessage: (state, action) => {
+      console.log("addPrevMessage is called");
+      const { receiverId, messages } = action.payload;
+      if (state.messages[receiverId]) {
+        if (Array.isArray(messages)) {
+          const reversedMessages = [...messages].reverse();
+
+          state.messages[receiverId] = [
+            ...reversedMessages,
+            ...(state.messages[receiverId] || []),
+          ];
+        }
+      }
+    },
   },
 });
 
-export const { addMessage } = messagesSlice.actions;
+export const { addMessage, setMessages, addPrevMessage } =
+  messagesSlice.actions;
 export default messagesSlice.reducer;

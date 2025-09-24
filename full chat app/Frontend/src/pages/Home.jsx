@@ -1,53 +1,80 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAllUsers } from "../api/user";
 import UsersList from "../components/UsersList";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { initSocket } from "../services/socketService";
+import { useSocket } from "../context/SocketContext";
 import { setOnlineUser } from "../feature/userSlice";
+import { getUnreadCount } from "../api/messages";
+import addUnreadCount from "../services/addUnreadCount";
 
 function Home() {
   const [users, setUsers] = useState([]);
+  const [unreadCounts, setUnreadCounts] = useState([]);
   const [isOpenLogout, setIsOpenLogout] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
   const navigate = useNavigate();
-
-  const socketRef = useRef(null);
-
+  const socket = useSocket();
   const dispatch = useDispatch();
+
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
-
-  const unreadMessagesObj = loggedInUser?.unreadMessages || {};
 
   const onlineUsers = useSelector((state) => state.user.onlineUsers);
   const usersWithOnlineStatus = users.map((user) => ({
     ...user,
     isOnline: onlineUsers.includes(user._id),
-    unreadMessages: unreadMessagesObj[user._id],
   }));
 
-  const filteredUsers = usersWithOnlineStatus.filter((user) =>
+  const usersWithUnreadCounts =
+    unreadCounts.length > 0
+      ? addUnreadCount(usersWithOnlineStatus, unreadCounts)
+      : usersWithOnlineStatus;
+
+  const filteredUsers = usersWithUnreadCounts.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleLogout = () => {
+    if (socket) {
+      socket.emit("logout", loggedInUserId);
+      socket.disconnect();
+    }
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  //fetching Unread Count data here
+  useEffect(() => {
+    async function fetchUnreadCounts() {
+      try {
+        if (loggedInUserId) {
+          console.log("fetching unreadcountes for id>>", loggedInUserId);
+          const counts = await getUnreadCount(loggedInUserId);
+          setUnreadCounts(counts || []);
+        }
+      } catch (error) {
+        console.error("Error fetching Unread counts>>", error);
+      }
+    }
+    fetchUnreadCounts();
+  }, [loggedInUserId]);
+
+  // set online user in redux from backend
+  useEffect(() => {
+    socket.on("onlineUsers", (onlineUsers) => {
+      dispatch(setOnlineUser(onlineUsers));
+    });
+  }, []);
+
+  // connection response to backend
   useEffect(() => {
     if (!loggedInUserId) return;
+    socket.emit("user_connected", loggedInUserId);
+  }, [loggedInUserId]);
 
-    socketRef.current = initSocket(loggedInUserId);
-
-    socketRef.current.on("onlineUser", (onlineUserlist) => {
-      dispatch(setOnlineUser(onlineUserlist));
-    });
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("onlineUser");
-        socketRef.current.disconnect();
-      }
-    };
-  }, [loggedInUserId, dispatch]);
-
+  // fetch list of User here
   useEffect(() => {
     async function fetchUsers() {
       try {
@@ -59,14 +86,6 @@ function Home() {
     }
     fetchUsers();
   }, []);
-
-  const handleLogout = () => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-    }
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">

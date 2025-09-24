@@ -15,11 +15,6 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6,
   },
-  unreadMessages: {
-    type: Map,
-    of: Number, // key: senderId, value: count
-    default: {},
-  },
 });
 
 const User = model("User", userSchema);

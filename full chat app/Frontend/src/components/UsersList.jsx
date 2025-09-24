@@ -1,7 +1,38 @@
 import { useNavigate } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+import { useEffect, useState } from "react";
 
 function UsersList({ users }) {
+  const [userList, setUserList] = useState(users || []);
   const navigate = useNavigate();
+  const socket = useSocket();
+
+  useEffect(() => {
+    setUserList(users || []);
+  }, [users]);
+
+  useEffect(() => {
+    socket.on("start_typing", ({ senderId }) => {
+      setUserList((prevUsers) => {
+        return prevUsers.map((user) => {
+          return user._id === senderId ? { ...user, isTyping: true } : user;
+        });
+      });
+    });
+
+    socket.on("stop_typing", ({ senderId }) => {
+      setUserList((prevUsers) => {
+        return prevUsers.map((user) => {
+          return user._id === senderId ? { ...user, isTyping: false } : user;
+        });
+      });
+    });
+
+    return () => {
+      socket.off("start_typing");
+      socket.off("stop_typing");
+    };
+  }, []);
 
   if (!users || users.length === 0) {
     return (
@@ -14,7 +45,7 @@ function UsersList({ users }) {
   return (
     <div className="overflow-y-auto max-h-[500px]">
       <ul>
-        {users.map((user) => (
+        {userList.map((user) => (
           <li
             key={user._id}
             className="flex items-center gap-3 p-3 rounded-md mb-1 cursor-pointer hover:bg-gray-200 transition relative"
@@ -32,17 +63,18 @@ function UsersList({ users }) {
             <div className="flex flex-col flex-1">
               <span className="font-medium text-gray-800">{user?.name}</span>
               <span className="text-sm text-gray-500">
-                {user?.isOnline ? (
+                {user.isTyping ? (
+                  <span className="text-green-600 font-medium">typing...</span>
+                ) : user?.isOnline ? (
                   <span className="text-green-600 font-bold">Online</span>
                 ) : (
                   "Offline"
                 )}
               </span>
             </div>
-
-            {user?.unreadMessages > 0 && (
+            {user?.unreadCount !== undefined && user?.unreadCount > 0 && (
               <span className="ml-auto px-2 py-1 text-xs font-semibold text-white bg-green-500 rounded-full">
-                {user.unreadMessages}
+                {user.unreadCount}
               </span>
             )}
           </li>

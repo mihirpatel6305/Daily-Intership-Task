@@ -1,18 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { initSocket, getSocket } from "../services/socketService";
-import { addMessage, fetchMessages } from "../feature/messageSlice";
+import {
+  addMessage,
+  addPrevMessage,
+  setMessages,
+} from "../feature/messageSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
-import { resetUnreadMessage } from "../api/user";
 import { formatTime } from "../services/formatTime";
 import formatDateString from "../services/formatDateString";
+import { useSocket } from "../context/SocketContext";
 
 function ChatWindow() {
   const [input, setInput] = useState("");
-  const socketRef = useRef(null);
+  const [before, setBefore] = useState(() => new Date());
+  const [isTyping, setIsTyping] = useState(false);
   const dispatch = useDispatch();
+  const socket = useSocket();
+  const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
   const navigate = useNavigate();
 
   const loggedInUser = useSelector((state) => state.user.currentUser);
@@ -22,17 +30,39 @@ function ChatWindow() {
   const selectedUser = location.state?.user;
 
   const messages = useSelector(
-    (state) => state.messages.messages[selectedUser?._id] || []
+    (state) => state.messages?.messages[selectedUser?._id] || []
   );
 
   const loading = useSelector((state) => state.messages.loading);
   const error = useSelector((state) => state.messages.error);
 
+  function handleInputChange(e) {
+    setInput(e.target.value);
+    if (!isTypingRef.current) {
+      socket.emit("start_typing", {
+        senderId: loggedInUserId,
+        receiverId: selectedUser._id,
+      });
+      isTypingRef.current = true;
+    }
+
+    // clear timeout for every change to reset timer
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stop_typing", {
+        senderId: loggedInUserId,
+        receiverId: selectedUser._id,
+      });
+      isTypingRef.current = false;
+    }, 2000);
+  }
+
   function handleSend() {
     if (!input.trim()) return;
 
-    if (!socketRef.current) {
-      console.error("Socket not initialized yet!");
+    if (!socket || !socket.connected) {
+      console.log("Socket is not connected yet!");
       return;
     }
 
@@ -42,48 +72,152 @@ function ChatWindow() {
       text: input,
     };
 
-    socketRef.current.emit("private-message", message);
-    dispatch(addMessage({ receiverId: selectedUser?._id, message }));
+    socket.emit("message", message);
+
+    dispatch(
+      addMessage({
+        receiverId: selectedUser?._id,
+        message,
+      })
+    );
+
     setInput("");
   }
 
+  // For handling new messaages from receiver
   useEffect(() => {
-    if (!loggedInUserId) return;
+    if (!socket || !socket?.connected) return;
 
-    socketRef.current = initSocket(loggedInUserId);
+    const handleMessage = (message) => {
+      dispatch(
+        addMessage({
+          receiverId: message.senderId,
+          message,
+        })
+      );
+    };
 
-    socketRef.current.on("private-message", (msg) => {
-      dispatch(addMessage({ receiverId: msg?.senderId, message: msg }));
+    socket.on("message", handleMessage);
+    socket.emit("active", {
+      senderId: loggedInUserId,
+      receiverId: selectedUser?._id,
     });
 
     return () => {
-      if (socketRef.current) socketRef.current.off("private-message");
+      socket.off("message", handleMessage);
+      socket.emit("inActive", {
+        senderId: loggedInUserId,
+      });
     };
-  }, [loggedInUserId, dispatch]);
+  }, [socket, socket?.connected, selectedUser?._id, loggedInUserId]);
 
+  // Fetching initial messages
+  useEffect(() => {
+    socket.emit("getInitialMessages", {
+      senderId: loggedInUserId,
+      receiverId: selectedUser?._id,
+      before,
+    });
+
+    socket.on("getInitialMessages", (messages) => {
+      dispatch(setMessages({ receiverId: selectedUser?._id, messages }));
+      setBefore(messages[messages?.length - 1]?.createdAt);
+    });
+  }, [loggedInUserId]);
+
+  // For Prev Messages fetch
+  function fetchMoreData() {
+    socket.emit("getPrevMessages", {
+      senderId: loggedInUserId,
+      receiverId: selectedUser?._id,
+      before,
+    });
+  }
+  // Trigger fetching enent of previous messages when the user scrolls to the top
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (container.scrollTop === 0) {
+        console.log("Reached top → fetching older messages");
+        fetchMoreData();
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [before]);
+
+  // For Adding Previous messages in Redux store
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handlePrevMessages = (messages) => {
+      const prevScrollHeight = container.scrollHeight;
+
+      if (Array.isArray(messages) && messages.length > 0) {
+        dispatch(addPrevMessage({ receiverId: selectedUser?._id, messages }));
+        setBefore(messages[messages?.length - 1]?.createdAt);
+      }
+
+      // timeout is wait for adding new message at top.
+      setTimeout(() => {
+        const newScrollHeight = container.scrollHeight;
+        container.scrollTop = newScrollHeight - prevScrollHeight;
+      }, 0);
+    };
+
+    socket.on("getPrevMessages", handlePrevMessages);
+
+    return () => {
+      socket.off("getPrevMessages", handlePrevMessages);
+    };
+  }, [socket, dispatch, selectedUser?._id]);
+
+  useEffect(() => {
+    // If user refresh this page then important to emit.
+    if (!loggedInUserId) return;
+    socket.emit("user_connected", loggedInUserId);
+
+    // handle mark as read messages.
+    if (loggedInUserId && selectedUser._id) {
+      socket.emit("mark_as_read", {
+        userId: loggedInUserId,
+        chatWithId: selectedUser?._id,
+      });
+    } else {
+      console.error("userId or seletedUserId is not defined");
+    }
+  }, [loggedInUserId]);
+
+  // For smooth scorll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  //For Typing... indicator
   useEffect(() => {
-    if (selectedUser?._id) {
-      dispatch(fetchMessages(selectedUser?._id));
-    }
-  }, [selectedUser, dispatch]);
-
-  useEffect(() => {
-    const resetMessage = async () => {
-      if (selectedUser?._id) {
-        try {
-          await resetUnreadMessage(selectedUser._id);
-        } catch (error) {
-          console.error("Error resetting unread messages:", error);
-        }
+    socket.on("start_typing", ({ senderId }) => {
+      console.log("senderId is>>>", senderId);
+      if (senderId && senderId == selectedUser?._id) {
+        setIsTyping(true);
       }
-    };
+    });
 
-    resetMessage();
-  }, [selectedUser?._id]);
+    socket.on("stop_typing", ({ senderId }) => {
+      if (senderId && senderId == selectedUser?._id) {
+        setIsTyping(false);
+      }
+    });
+    return () => {
+      socket.off("start_typing");
+      socket.off("stop_typing");
+    };
+  }, []);
 
   if (error) return <div className="text-red-500">{error}</div>;
 
@@ -104,6 +238,7 @@ function ChatWindow() {
         </div>
 
         <div
+          ref={chatContainerRef}
           style={{ scrollbarWidth: "none" }}
           className="flex-1 overflow-y-auto p-4 space-y-2"
         >
@@ -114,9 +249,6 @@ function ChatWindow() {
               const isSender = msg.senderId === loggedInUserId;
               const currentDate = formatDateString(msg.createdAt);
               const prevDate = formatDateString(messages[i - 1]?.createdAt);
-
-              console.log("currentDate>>>", currentDate);
-              console.log("prevDate>>>", prevDate);
 
               return (
                 <div key={i}>
@@ -151,6 +283,23 @@ function ChatWindow() {
               );
             })
           )}
+
+          {isTyping && (
+            <div className="flex items-center gap-1 px-2 pt-2">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-gray-600"
+                  style={{
+                    display: "inline-block",
+                    animation: "typingDots 1s infinite",
+                    animationDelay: `${i * 0.2}s`,
+                  }}
+                ></span>
+              ))}
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -158,7 +307,7 @@ function ChatWindow() {
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Type a message..."
             className="flex-grow border rounded-full px-4 py-2 focus:outline-none"
             onKeyDown={(e) => e.key === "Enter" && handleSend()}

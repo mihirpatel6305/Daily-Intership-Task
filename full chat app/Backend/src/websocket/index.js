@@ -1,55 +1,9 @@
-// import { Server } from "socket.io";
-// import { saveMessage } from "../controllers/messageController.js";
-// import { updateUnreadMessage } from "../controllers/userController.js";
-
-// function setupSocketIO(server) {
-//   const io = new Server(server, {
-//     cors: {
-//       origin: "http://localhost:5173",
-//       methods: ["GET", "POST"],
-//     },
-//   });
-
-//   const userSocketMap = new Map();
-
-//   io.on("connection", (socket) => {
-//     console.log("User connected:", socket.id);
-
-//     io.emit("onlineUser", Array.from(userSocketMap.keys()));
-
-//     socket.on("register", (userId) => {
-//       userSocketMap.set(userId, socket.id);
-//       console.log(`User ${userId} registered with socket ${socket.id}`);
-//     });
-
-//     socket.on("private-message", async ({ senderId, receiverId, text }) => {
-//       const message = await saveMessage({ senderId, receiverId, text });
-//       //  update unreadCount
-//       await updateUnreadMessage(senderId, receiverId);
-
-//       const receiverSocketId = userSocketMap.get(receiverId);
-//       if (receiverSocketId) {
-//         io.to(receiverSocketId).emit("private-message", message);
-//       }
-//     });
-
-//     socket.on("disconnect", () => {
-//       console.log("Connection Closed:", socket.id);
-//       for (let [userId, sId] of userSocketMap.entries()) {
-//         if (sId === socket.id) {
-//           userSocketMap.delete(userId);
-//           break;
-//         }
-//       }
-//     });
-//   });
-// }
-
-// export default setupSocketIO;
-
 import { Server } from "socket.io";
-import { saveMessage } from "../controllers/messageController.js";
-import { updateUnreadMessage } from "../controllers/userController.js";
+import {
+  fetchMessages,
+  markAsRead,
+  saveMessage,
+} from "../controllers/messageController.js";
 
 function setupSocketIO(server) {
   const io = new Server(server, {
@@ -59,59 +13,103 @@ function setupSocketIO(server) {
     },
   });
 
-  // Use Map to store arrays of socket IDs for each user (to support multiple tabs)
   const userSocketMap = new Map();
 
+  const activeUserMap = new Map();
+
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+    console.log("connection>>", socket.id);
 
-    socket.on("register", (userId) => {
-      // Add socket ID to user's array of sockets
-      if (!userSocketMap.has(userId)) {
-        userSocketMap.set(userId, []);
-      }
-      userSocketMap.get(userId).push(socket.id);
-      console.log(`User ${userId} registered with socket ${socket.id}`);
-
-      // Broadcast updated online users list to all clients
-      io.emit("onlineUser", Array.from(userSocketMap.keys()));
+    socket.on("user_connected", (userId) => {
+      userSocketMap.set(userId, socket.id);
+      io.emit("onlineUsers", Array.from(userSocketMap.keys()));
     });
 
-    socket.on("private-message", async ({ senderId, receiverId, text }) => {
-      const message = await saveMessage({ senderId, receiverId, text });
-      //  update unreadCount
-      await updateUnreadMessage(senderId, receiverId);
+    socket.on("active", ({ senderId, receiverId }) => {
+      activeUserMap.set(senderId, receiverId);
+    });
 
-      const receiverSocketIds = userSocketMap.get(receiverId);
-      if (receiverSocketIds && receiverSocketIds.length > 0) {
-        // Send message to all sockets/tabs of the receiver
-        receiverSocketIds.forEach((socketId) => {
-          io.to(socketId).emit("private-message", message);
+    socket.on("inActive", ({ senderId }) => {
+      activeUserMap.delete(senderId);
+    });
+
+    socket.on("message", async ({ senderId, receiverId, text }) => {
+      const isChatOpen =
+        activeUserMap.has(receiverId) &&
+        activeUserMap.get(receiverId) === senderId;
+
+      const msg = { senderId, receiverId, text, isUnread: !isChatOpen };
+      const message = await saveMessage(msg);
+      const socketId = userSocketMap.get(receiverId);
+      io.to(socketId).emit("message", message);
+    });
+
+    socket.on("mark_as_read", async ({ userId, chatWithId }) => {
+      if (userId && chatWithId) {
+        await markAsRead({ userId, chatWithId });
+      } else {
+        console.error("mark_as_read failed: userId or chatWithId is missing", {
+          userId,
+          chatWithId,
         });
       }
     });
 
+    socket.on("start_typing", ({ senderId, receiverId }) => {
+      const socketId = userSocketMap.get(receiverId);
+      io.to(socketId).emit("start_typing", { senderId });
+    });
+
+    socket.on("stop_typing", ({ senderId, receiverId }) => {
+      const socketId = userSocketMap.get(receiverId);
+      io.to(socketId).emit("stop_typing", { senderId });
+    });
+
+    socket.on(
+      "getInitialMessages",
+      async ({ senderId, receiverId, before }) => {
+        console.log("getInitialMessages event");
+        const limit = 20;
+        const messages = await fetchMessages(
+          { senderId, receiverId },
+          limit,
+          before
+        );
+        console.log("initial messages>>", messages);
+        socket.emit("getInitialMessages", messages);
+      }
+    );
+
+    socket.on("getPrevMessages", async ({ senderId, receiverId, before }) => {
+      console.log("getPrevMessages event");
+      const limit = 5;
+      const messages = await fetchMessages(
+        { senderId, receiverId },
+        limit,
+        before
+      );
+      console.log("prev messages>>", messages);
+      socket.emit("getPrevMessages", messages);
+    });
+
+    socket.on("logout", (userId) => {
+      const socketId = userSocketMap.get(userId);
+      if (socketId) {
+        io.sockets.sockets.get(socketId)?.disconnect(true);
+        userSocketMap.delete(userId);
+        io.emit("onlineUsers", Array.from(userSocketMap.keys()));
+      }
+    });
+
     socket.on("disconnect", () => {
-      console.log("Connection Closed:", socket.id);
-
-      // Find and remove the disconnected socket from user's socket array
-      for (let [userId, socketIds] of userSocketMap.entries()) {
-        const socketIndex = socketIds.indexOf(socket.id);
-        if (socketIndex !== -1) {
-          socketIds.splice(socketIndex, 1);
-          console.log(`Removed socket ${socket.id} from user ${userId}`);
-
-          // If user has no more active sockets, remove them from online users
-          if (socketIds.length === 0) {
-            userSocketMap.delete(userId);
-            console.log(`User ${userId} went offline (no active sockets)`);
-          }
-
-          // Broadcast updated online users list to all clients
-          io.emit("onlineUser", Array.from(userSocketMap.keys()));
-          break;
+      console.log("disconnected >>>", socket.id);
+      for (const [userId, socketId] of userSocketMap.entries()) {
+        if (socketId == socket?.id) {
+          userSocketMap.delete(userId);
         }
       }
+
+      io.emit("onlineUsers", Array.from(userSocketMap.keys()));
     });
   });
 }

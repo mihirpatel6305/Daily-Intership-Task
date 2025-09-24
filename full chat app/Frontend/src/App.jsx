@@ -3,6 +3,7 @@ import AllRoutes from "./routes/index";
 import { getProfile } from "./api/user";
 import { useEffect } from "react";
 import { clearUser, setUser } from "./feature/userSlice";
+
 function App() {
   const dispatch = useDispatch();
   useEffect(() => {
