@@ -11,8 +11,34 @@ function UsersList({ users }) {
     setUserList(users || []);
   }, [users]);
 
-  useEffect(() => {}, []);
+  // Update userList on new Message
+  useEffect(() => {
+    if (!socket) return;
 
+    const handleIncomingMessage = (message) => {
+      setUserList((prevUsers) =>
+        prevUsers.map((user) => {
+          if (user?._id === message?.senderId) {
+            return {
+              ...user,
+              unreadCount: (user?.unreadCount || 0) + 1,
+            };
+          }
+          return user;
+        })
+      );
+    };
+
+    socket.on("message", handleIncomingMessage);
+    socket.on("imageMessage", handleIncomingMessage);
+
+    return () => {
+      socket.off("message", handleIncomingMessage);
+      socket.off("imageMessage", handleIncomingMessage);
+    };
+  }, [socket]);
+
+  // Showing typing indicator in UserList
   useEffect(() => {
     socket.on("start_typing", ({ senderId }) => {
       setUserList((prevUsers) => {

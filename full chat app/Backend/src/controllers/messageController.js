@@ -49,12 +49,7 @@ export async function saveImageMessage(req, res) {
 
     const newMsg = await newMessage.save();
 
-    console.log("newMsg>>", newMsg);
-
-    // const socketId = userSocketMap.get(newMsg?.receiverId);
     const socketId = userSocketMap.get(newMsg?.receiverId.toString());
-    console.log("userSocketMap>>", userSocketMap);
-    console.log("socketId>>", socketId);
     io.to(socketId).emit("imageMessage", newMsg);
     res.status(200).send({ message: "image Send successfully", newMessage });
   } catch (error) {
@@ -88,7 +83,6 @@ export async function markAsRead({ userId, chatWithId }) {
       },
       { $set: { isUnread: false } }
     );
-    console.log("result>>", result);
     return result;
   } catch (error) {
     console.error("Error in MarkAsRead >>", error);

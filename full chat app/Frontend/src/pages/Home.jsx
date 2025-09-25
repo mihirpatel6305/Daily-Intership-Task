@@ -7,12 +7,14 @@ import { useSocket } from "../context/SocketContext";
 import { setOnlineUser } from "../feature/userSlice";
 import { getUnreadCount } from "../api/messages";
 import addUnreadCount from "../services/addUnreadCount";
+import Loader from "../components/Loader";
 
 function Home() {
   const [users, setUsers] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState([]);
   const [isOpenLogout, setIsOpenLogout] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const socket = useSocket();
@@ -50,7 +52,6 @@ function Home() {
     async function fetchUnreadCounts() {
       try {
         if (loggedInUserId) {
-          console.log("fetching unreadcountes for id>>", loggedInUserId);
           const counts = await getUnreadCount(loggedInUserId);
           setUnreadCounts(counts || []);
         }
@@ -61,27 +62,31 @@ function Home() {
     fetchUnreadCounts();
   }, [loggedInUserId]);
 
-  // set online user in redux from backend
+  // Set online user in redux from backend
   useEffect(() => {
     socket.on("onlineUsers", (onlineUsers) => {
       dispatch(setOnlineUser(onlineUsers));
     });
   }, []);
 
-  // connection response to backend
+  // Connection response to backend
   useEffect(() => {
     if (!loggedInUserId) return;
     socket.emit("user_connected", loggedInUserId);
   }, [loggedInUserId]);
 
-  // fetch list of User here
+  // Fetch list of User here
   useEffect(() => {
     async function fetchUsers() {
       try {
+        setIsLoading(true);
         const allUser = await getAllUsers();
         setUsers(allUser);
       } catch (error) {
         console.error("Error fetching users:", error);
+        alert("Error in fetching User List");
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchUsers();
@@ -111,7 +116,7 @@ function Home() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <UsersList users={filteredUsers} />
+          {isLoading ? <Loader /> : <UsersList users={filteredUsers} />}
         </div>
       </div>
       {isOpenLogout && (

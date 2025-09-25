@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
 const messagesSlice = createSlice({
   name: "messages",
@@ -25,7 +25,6 @@ const messagesSlice = createSlice({
       }
     },
     addPrevMessage: (state, action) => {
-      console.log("addPrevMessage is called");
       const { receiverId, messages } = action.payload;
       if (state.messages[receiverId]) {
         if (Array.isArray(messages)) {

@@ -9,8 +9,10 @@ import {
 } from "../feature/messageSlice";
 import formatDateString from "../services/formatDateString";
 import formatTime from "../services/formatTime";
+import Loader from "./Loader";
 
 function ChatContainer({ isTyping }) {
+  const [loadingPrev, setLoadingPrev] = useState(false);
   const [before, setBefore] = useState(() => new Date());
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
@@ -68,6 +70,8 @@ function ChatContainer({ isTyping }) {
 
   // For Prev Messages fetch
   function fetchMoreData() {
+    if (loadingPrev) return;
+    setLoadingPrev(true);
     socket.emit("getPrevMessages", {
       senderId: loggedInUserId,
       receiverId: selectedUser?._id,
@@ -81,7 +85,6 @@ function ChatContainer({ isTyping }) {
 
     const handleScroll = () => {
       if (container.scrollTop === 0) {
-        console.log("Reached top → fetching older messages");
         fetchMoreData();
       }
     };
@@ -105,6 +108,9 @@ function ChatContainer({ isTyping }) {
         setBefore(messages[messages?.length - 1]?.createdAt);
       }
 
+      // Stop loader
+      setLoadingPrev(false);
+
       // timeout is wait for adding new message at top.
       setTimeout(() => {
         const newScrollHeight = container.scrollHeight;
@@ -127,7 +133,6 @@ function ChatContainer({ isTyping }) {
   // for upcoming image message
   useEffect(() => {
     const handleImageMessage = (newImageMessage) => {
-      console.log("newImageMessage>>", newImageMessage);
       dispatch(
         addMessage({
           receiverId: newImageMessage.senderId,
@@ -155,10 +160,19 @@ function ChatContainer({ isTyping }) {
       style={{ scrollbarWidth: "none" }}
       className="flex-1 overflow-y-auto p-4 space-y-2"
     >
+      {loadingPrev && (
+        <div className="max-h-80">
+          <Loader />
+        </div>
+      )}
+
       {messages.map((msg, i) => {
         const isSender = msg.senderId === loggedInUserId;
         const currentDate = formatDateString(msg.createdAt);
         const prevDate = formatDateString(messages[i - 1]?.createdAt);
+
+        const isFirstUnread =
+          msg.isUnread && !messages.slice(0, i).some((m) => m.isUnread);
 
         return (
           <div key={i}>
@@ -167,6 +181,17 @@ function ChatContainer({ isTyping }) {
                 {currentDate}
               </div>
             )}
+
+            {isFirstUnread && (
+              <div className="flex items-center my-4">
+                <div className="flex-grow border-t border-green-300"></div>
+                <span className="mx-4 text-green-500 text-sm font-medium">
+                  New messages
+                </span>
+                <div className="flex-grow border-t border-green-300"></div>
+              </div>
+            )}
+
             <div
               className={`flex ${
                 isSender ? "justify-end" : "justify-start"
@@ -179,7 +204,11 @@ function ChatContainer({ isTyping }) {
                     : "bg-gray-200 text-gray-900 rounded-br-lg rounded-tl-none"
                 }`}
               >
-                <div className="flex items-end gap-2">
+                <div
+                  className={`flex items-end gap-2 ${
+                    msg?.image ? "flex-col" : ""
+                  }`}
+                >
                   {msg?.image ? (
                     <img
                       src={msg.image}

@@ -17,11 +17,6 @@ function ChatWindow() {
   const location = useLocation();
   const selectedUser = location.state?.user;
 
-  // useEffect(() => {
-  //   if (!loggedInUserId) return;
-  //   socket.emit("user_connected", loggedInUserId);
-  // }, [loggedInUserId]);
-
   useEffect(() => {
     if (!socket || !loggedInUserId) return;
     // If user refresh this page then important to emit.
