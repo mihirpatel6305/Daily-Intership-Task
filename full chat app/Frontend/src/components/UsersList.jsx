@@ -11,6 +11,8 @@ function UsersList({ users }) {
     setUserList(users || []);
   }, [users]);
 
+  useEffect(() => {}, []);
+
   useEffect(() => {
     socket.on("start_typing", ({ senderId }) => {
       setUserList((prevUsers) => {

@@ -5,17 +5,17 @@ import {
   saveMessage,
 } from "../controllers/messageController.js";
 
+let io;
+const userSocketMap = new Map();
+const activeUserMap = new Map();
+
 function setupSocketIO(server) {
-  const io = new Server(server, {
+  io = new Server(server, {
     cors: {
       origin: "http://localhost:5173",
       methods: ["GET", "POST"],
     },
   });
-
-  const userSocketMap = new Map();
-
-  const activeUserMap = new Map();
 
   io.on("connection", (socket) => {
     console.log("connection>>", socket.id);
@@ -68,27 +68,23 @@ function setupSocketIO(server) {
     socket.on(
       "getInitialMessages",
       async ({ senderId, receiverId, before }) => {
-        console.log("getInitialMessages event");
-        const limit = 20;
+        const limit = 15;
         const messages = await fetchMessages(
           { senderId, receiverId },
           limit,
           before
         );
-        console.log("initial messages>>", messages);
         socket.emit("getInitialMessages", messages);
       }
     );
 
     socket.on("getPrevMessages", async ({ senderId, receiverId, before }) => {
-      console.log("getPrevMessages event");
       const limit = 5;
       const messages = await fetchMessages(
         { senderId, receiverId },
         limit,
         before
       );
-      console.log("prev messages>>", messages);
       socket.emit("getPrevMessages", messages);
     });
 
@@ -115,3 +111,5 @@ function setupSocketIO(server) {
 }
 
 export default setupSocketIO;
+
+export { io, userSocketMap };

@@ -1,4 +1,4 @@
-export function formatTime(isoString) {
+export default function formatTime(isoString) {
   if (!isoString) return "";
 
   const date = new Date(isoString);

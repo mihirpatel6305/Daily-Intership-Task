@@ -8,3 +8,18 @@ export const getUnreadCount = async (userId) => {
     throw error.response?.data || error.message;
   }
 };
+
+export const sendImageMessage = async (receiverId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await api.post(`message/sendImage/${receiverId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};

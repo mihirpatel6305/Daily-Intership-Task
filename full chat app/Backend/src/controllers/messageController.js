@@ -1,23 +1,5 @@
 import Message from "../models/message.js";
-
-export async function sendMessage(req, res) {
-  const { text } = req.body;
-  const user = req.user;
-  const { id: receiverId } = req.params;
-
-  try {
-    const message = await Message.create({
-      senderId: user._id,
-      receiverId: receiverId,
-      text: text,
-    });
-
-    res.status(201).json({ message });
-  } catch (error) {
-    console.error("Error in sendMessage >>", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
+import { userSocketMap, io } from "../websocket/index.js";
 
 export async function getChatMessage(req, res) {
   const user = req.user;
@@ -35,6 +17,49 @@ export async function getChatMessage(req, res) {
   } catch (error) {
     console.error("Error in getChatMessage >>", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function saveImageMessage(req, res) {
+  try {
+    if (!req?.file) {
+      return res
+        .status(400)
+        .json({ message: "Please send an image as form-data" });
+    }
+
+    const senderId = req.user?._id;
+    if (!senderId) {
+      return res.status(401).json({ message: "Sender not authenticated" });
+    }
+
+    const receiverId = req.params?.id;
+    if (!receiverId) {
+      return res.status(400).json({ message: "Receiver ID is required" });
+    }
+
+    const imageUrl = req.file.path;
+
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      image: imageUrl,
+      messageType: "image",
+    });
+
+    const newMsg = await newMessage.save();
+
+    console.log("newMsg>>", newMsg);
+
+    // const socketId = userSocketMap.get(newMsg?.receiverId);
+    const socketId = userSocketMap.get(newMsg?.receiverId.toString());
+    console.log("userSocketMap>>", userSocketMap);
+    console.log("socketId>>", socketId);
+    io.to(socketId).emit("imageMessage", newMsg);
+    res.status(200).send({ message: "image Send successfully", newMessage });
+  } catch (error) {
+    console.error("error in saveImageMessage function>>", error);
+    res.status(500).send({ message: "Error in save image", error });
   }
 }
 
@@ -72,9 +97,7 @@ export async function markAsRead({ userId, chatWithId }) {
 }
 
 export async function getUnreadCount(req, res) {
-  console.log("getUnReadCount");
   const userId = req.user._id;
-  console.log(userId);
   try {
     const unreadCounts = await Message.aggregate([
       { $match: { receiverId: userId, isUnread: true } },
