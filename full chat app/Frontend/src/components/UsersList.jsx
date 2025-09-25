@@ -77,7 +77,7 @@ function UsersList({ users }) {
           <li
             key={user._id}
             className="flex items-center gap-3 p-3 rounded-md mb-1 cursor-pointer hover:bg-gray-200 transition relative"
-            onClick={() => navigate("/chatWindow", { state: { user } })}
+            onClick={() => navigate(`/chat/${user?._id}`)}
           >
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-xl">

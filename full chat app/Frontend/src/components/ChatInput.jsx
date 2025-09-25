@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useSocket } from "../context/SocketContext";
 import { addMessage } from "../feature/messageSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
 import { sendImageMessage } from "../api/messages";
 
-function ChatInput({ input, setInput }) {
+function ChatInput({ input, setInput, selectedUser }) {
   const socket = useSocket();
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSending, setIsSending] = useState(false);
@@ -17,9 +16,6 @@ function ChatInput({ input, setInput }) {
 
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
-
-  const location = useLocation();
-  const selectedUser = location.state?.user;
 
   // handle text input change
   function handleInputChange(e) {
@@ -97,7 +93,7 @@ function ChatInput({ input, setInput }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full">
       {selectedFile && !closePreview && (
         <div className="relative w-32 h-32">
           <img

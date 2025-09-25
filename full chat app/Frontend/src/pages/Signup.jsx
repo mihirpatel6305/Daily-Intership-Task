@@ -19,8 +19,8 @@ function SignUp() {
       await signinUser(name, email, password);
       navigate("/");
     } catch (err) {
-      if (err.response && err.response.data?.message) {
-        setError(err.response.data.message);
+      if (err?.message) {
+        setError(err?.message);
       } else {
         setError("Something went wrong. Please try again.");
       }

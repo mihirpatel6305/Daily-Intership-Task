@@ -13,7 +13,7 @@ function AllRoutes() {
       <Route element={<SocketProvider />}>
         <Route element={<ProtectedRoutes />}>
           <Route path="/" element={<Home />} />
-          <Route path="/chatWindow" element={<ChatWindow />} />
+          <Route path="/chat/:id" element={<ChatWindow />} />
         </Route>
       </Route>
       <Route element={<PublicRoutes />}>

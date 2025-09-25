@@ -10,10 +10,6 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-app.get("/api", (req, res) => {
-  res.send("This is Home page");
-});
-
 app.use("/api/auth", authRoutes);
 app.use("/api/message", messageRoutes);
 app.use("/api/user", userRoutes);

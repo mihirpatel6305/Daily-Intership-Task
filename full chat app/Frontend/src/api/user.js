@@ -18,9 +18,9 @@ export const getProfile = async () => {
   }
 };
 
-export const resetUnreadMessage = async (senderId) => {
+export const getUserById = async (id) => {
   try {
-    const res = await api.get(`/user/resetUnreadMessage/${senderId}`);
+    const res = await api.get(`/user/${id}`);
     return res.data;
   } catch (error) {
     throw error.response?.data || error.message;

@@ -25,10 +25,10 @@ function Login() {
       dispatch(setUser(data?.user));
       navigate("/");
     } catch (err) {
-      if (err.response && err.response.data?.message) {
-        setError(err.response.data.message);
+      if (err?.message) {
+        setError(err?.message);
       } else {
-        setError("Invalid email or password. Please try again.");
+        setError("Unexpacted Error");
       }
       console.error("login error>>", err);
     } finally {

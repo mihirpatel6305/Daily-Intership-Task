@@ -1,44 +1,62 @@
 import { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import ChatInput from "../components/ChatInput";
 import ChatContainer from "../components/ChatContainer";
+import { setSelectedUser } from "../feature/userSlice";
+import { getUserById } from "../api/user";
 
 function ChatWindow() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const socket = useSocket();
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
 
-  const location = useLocation();
-  const selectedUser = location.state?.user;
+  const { id } = useParams();
+
+  const selectedUserFromAllUsers = useSelector((state) =>
+    state.user.allUsers.find((u) => u._id === id)
+  );
+
+  const selectedUserFromRedux = useSelector((state) => state.user.selectedUser);
+
+  const selectedUser = selectedUserFromAllUsers || selectedUserFromRedux;
+
+  // Fetching seleted user data on page reload
+  useEffect(() => {
+    async function fetchSelectedUser(id) {
+      try {
+        const data = await getUserById(id);
+        if (data?.user) {
+          dispatch(setSelectedUser(data.user));
+        } else {
+          console.warn("User not found");
+        }
+      } catch (error) {
+        console.error("Error fetching selected user:", error);
+      }
+    }
+    if (!selectedUser && id) {
+      fetchSelectedUser(id);
+    }
+  }, [id, selectedUser?.id]);
 
   useEffect(() => {
-    if (!socket || !loggedInUserId) return;
+    if (!socket || !loggedInUserId || !selectedUser?._id) return;
+
     // If user refresh this page then important to emit.
-    const handleConnect = () => {
-      socket.emit("user_connected", loggedInUserId);
-    };
+    socket.emit("user_connected", loggedInUserId);
 
     // handle mark as read messages.
-    if (loggedInUserId && selectedUser?._id) {
-      socket.emit("mark_as_read", {
-        userId: loggedInUserId,
-        chatWithId: selectedUser._id,
-      });
-    } else {
-      console.error("userId or seletedUserId is not defined");
-    }
-
-    socket.on("connect", handleConnect);
-    return () => {
-      socket.off("connect", handleConnect);
-    };
-  }, [socket, loggedInUserId]);
+    socket.emit("mark_as_read", {
+      userId: loggedInUserId,
+      chatWithId: selectedUser._id,
+    });
+  }, [socket, loggedInUserId, selectedUser?._id]);
 
   //For Typing... indicator
   useEffect(() => {
@@ -57,7 +75,7 @@ function ChatWindow() {
       socket.off("start_typing");
       socket.off("stop_typing");
     };
-  }, []);
+  }, [selectedUser?._id]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
@@ -70,15 +88,19 @@ function ChatWindow() {
             ←
           </button>
           <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-950 font-bold">
-            {selectedUser.name?.charAt(0).toUpperCase()}
+            {selectedUser?.name?.charAt(0).toUpperCase()}
           </div>
-          <span className="text-lg">{selectedUser.name}</span>
+          <span className="text-lg">{selectedUser?.name}</span>
         </div>
 
-        <ChatContainer isTyping={isTyping} />
+        <ChatContainer isTyping={isTyping} selectedUser={selectedUser} />
 
         <div className="flex p-4 gap-2 border-t">
-          <ChatInput input={input} setInput={setInput} />
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            selectedUser={selectedUser}
+          />
         </div>
       </div>
     </div>

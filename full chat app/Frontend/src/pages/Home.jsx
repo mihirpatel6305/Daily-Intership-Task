@@ -4,13 +4,12 @@ import UsersList from "../components/UsersList";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useSocket } from "../context/SocketContext";
-import { setOnlineUser } from "../feature/userSlice";
+import { setAllUser, setOnlineUser } from "../feature/userSlice";
 import { getUnreadCount } from "../api/messages";
 import addUnreadCount from "../services/addUnreadCount";
 import Loader from "../components/Loader";
 
 function Home() {
-  const [users, setUsers] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState([]);
   const [isOpenLogout, setIsOpenLogout] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,6 +21,8 @@ function Home() {
 
   const loggedInUser = useSelector((state) => state.user.currentUser);
   const loggedInUserId = loggedInUser?._id;
+
+  const users = useSelector((state) => state.user.allUsers);
 
   const onlineUsers = useSelector((state) => state.user.onlineUsers);
   const usersWithOnlineStatus = users.map((user) => ({
@@ -81,7 +82,7 @@ function Home() {
       try {
         setIsLoading(true);
         const allUser = await getAllUsers();
-        setUsers(allUser);
+        dispatch(setAllUser(allUser));
       } catch (error) {
         console.error("Error fetching users:", error);
         alert("Error in fetching User List");

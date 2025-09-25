@@ -1,5 +1,4 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -11,7 +10,7 @@ import formatDateString from "../services/formatDateString";
 import formatTime from "../services/formatTime";
 import Loader from "./Loader";
 
-function ChatContainer({ isTyping }) {
+function ChatContainer({ isTyping, selectedUser }) {
   const [loadingPrev, setLoadingPrev] = useState(false);
   const [before, setBefore] = useState(() => new Date());
   const loggedInUser = useSelector((state) => state.user.currentUser);
@@ -21,15 +20,13 @@ function ChatContainer({ isTyping }) {
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const location = useLocation();
-  const selectedUser = location.state?.user;
   const messages = useSelector(
     (state) => state.messages?.messages[selectedUser?._id] || []
   );
 
   // For handling new messaages from receiver
   useEffect(() => {
-    if (!socket || !socket?.connected) return;
+    if (!socket || !selectedUser?._id || !loggedInUserId) return;
 
     const handleMessage = (message) => {
       dispatch(
@@ -56,6 +53,7 @@ function ChatContainer({ isTyping }) {
 
   // Fetching initial messages
   useEffect(() => {
+    if (!socket || !selectedUser?._id || !loggedInUserId) return;
     socket.emit("getInitialMessages", {
       senderId: loggedInUserId,
       receiverId: selectedUser?._id,
@@ -66,7 +64,7 @@ function ChatContainer({ isTyping }) {
       dispatch(setMessages({ receiverId: selectedUser?._id, messages }));
       setBefore(messages[messages?.length - 1]?.createdAt);
     });
-  }, [loggedInUserId]);
+  }, [loggedInUserId, selectedUser?._id, loggedInUserId]);
 
   // For Prev Messages fetch
   function fetchMoreData() {
