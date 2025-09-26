@@ -20,11 +20,6 @@ const messageSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    messageType: {
-      type: String,
-      enum: ["text", "image"],
-      default: "text",
-    },
     isUnread: {
       type: Boolean,
       default: true,

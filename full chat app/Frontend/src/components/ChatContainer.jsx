@@ -9,6 +9,7 @@ import {
 import formatDateString from "../services/formatDateString";
 import formatTime from "../services/formatTime";
 import Loader from "./Loader";
+import ChatImageSkeleton from "./ChatImageSkeleton";
 
 function ChatContainer({ isTyping, selectedUser }) {
   const [loadingPrev, setLoadingPrev] = useState(false);
@@ -57,7 +58,6 @@ function ChatContainer({ isTyping, selectedUser }) {
     socket.emit("getInitialMessages", {
       senderId: loggedInUserId,
       receiverId: selectedUser?._id,
-      before,
     });
 
     socket.on("getInitialMessages", (messages) => {
@@ -165,7 +165,7 @@ function ChatContainer({ isTyping, selectedUser }) {
       )}
 
       {messages.map((msg, i) => {
-        const isSender = msg.senderId === loggedInUserId;
+        const isSender = msg?.senderId === loggedInUserId;
         const currentDate = formatDateString(msg.createdAt);
         const prevDate = formatDateString(messages[i - 1]?.createdAt);
 
@@ -180,7 +180,7 @@ function ChatContainer({ isTyping, selectedUser }) {
               </div>
             )}
 
-            {isFirstUnread && (
+            {isFirstUnread && loggedInUserId != msg?.senderId && (
               <div className="flex items-center my-4">
                 <div className="flex-grow border-t border-green-300"></div>
                 <span className="mx-4 text-green-500 text-sm font-medium">
@@ -204,14 +204,16 @@ function ChatContainer({ isTyping, selectedUser }) {
               >
                 <div
                   className={`flex items-end gap-2 ${
-                    msg?.image ? "flex-col" : ""
+                    msg?.image || msg?.skeleton ? "flex-col" : ""
                   }`}
                 >
-                  {msg?.image ? (
+                  {msg?.skeleton ? (
+                    <ChatImageSkeleton />
+                  ) : msg?.image ? (
                     <img
                       src={msg.image}
                       alt="chat image"
-                      className="max-w-[200px] rounded-lg"
+                      className="max-w-[200px] max-h-[300px] rounded-lg"
                     />
                   ) : (
                     <span className="break-words">{msg.text}</span>

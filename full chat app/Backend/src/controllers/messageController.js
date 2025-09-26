@@ -44,7 +44,6 @@ export async function saveImageMessage(req, res) {
       senderId,
       receiverId,
       image: imageUrl,
-      messageType: "image",
     });
 
     const newMsg = await newMessage.save();

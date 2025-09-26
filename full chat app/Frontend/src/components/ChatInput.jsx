@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useSocket } from "../context/SocketContext";
-import { addMessage } from "../feature/messageSlice";
+import { addMessage, updateMessage } from "../feature/messageSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { sendImageMessage } from "../api/messages";
 
@@ -43,17 +43,37 @@ function ChatInput({ input, setInput, selectedUser }) {
   // handling text and image send
   async function handleSend() {
     if (selectedFile) {
+      const tempId = Date.now();
       setIsSending(true);
       try {
         setClosePreview(true);
+        dispatch(
+          addMessage({
+            receiverId: selectedUser._id,
+            message: {
+              senderId: loggedInUserId,
+              receiverId: selectedUser?._id,
+              skeleton: true,
+              tempId,
+            },
+          })
+        );
         const res = await sendImageMessage(selectedUser._id, selectedFile);
 
         if (res.statusText == "OK") {
           const newMessage = res.data.newMessage;
+          // dispatch(
+          //   addMessage({
+          //     receiverId: selectedUser._id,
+          //     message: newMessage,
+          //   })
+          // );
+
           dispatch(
-            addMessage({
+            updateMessage({
               receiverId: selectedUser._id,
-              message: newMessage,
+              tempId,
+              updates: { ...newMessage, skeleton: false },
             })
           );
         }
@@ -61,7 +81,7 @@ function ChatInput({ input, setInput, selectedUser }) {
         setSelectedFile(null);
       } catch (error) {
         console.log("Error in Sending Image>>", error);
-        alert("Imgae sending is faild");
+        alert("Imgae sending is failed");
       } finally {
         setIsSending(false);
       }
@@ -147,7 +167,7 @@ function ChatInput({ input, setInput, selectedUser }) {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M3 5h18M3 12h18M3 19h18"
+              d="M3 7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
             />
           </svg>
         </button>
