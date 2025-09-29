@@ -10,10 +10,22 @@ const userSocketMap = new Map();
 const activeUserMap = new Map();
 
 function setupSocketIO(server) {
+  const allowedOrigins = [
+    "http://localhost:5173", // dev
+    "https://your-frontend-domain.com", // prod
+  ];
+
   io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS (socket.io)"));
+        }
+      },
       methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 
@@ -100,16 +112,14 @@ function setupSocketIO(server) {
     socket.on("disconnect", () => {
       console.log("disconnected >>>", socket.id);
       for (const [userId, socketId] of userSocketMap.entries()) {
-        if (socketId == socket?.id) {
+        if (socketId === socket.id) {
           userSocketMap.delete(userId);
         }
       }
-
       io.emit("onlineUsers", Array.from(userSocketMap.keys()));
     });
   });
 }
 
 export default setupSocketIO;
-
 export { io, userSocketMap };
